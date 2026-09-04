@@ -83,16 +83,17 @@
       />
       <el-table-column label="获取补贴金额" align="center" prop="subsidyAmount" width="130">
         <template #default="scope">
-          <span style="color: #e6462c; font-weight: 600">¥ {{ scope.row.subsidyAmount }} 万</span>
+          <span v-if="scope.row.subsidyAmount != null" style="color: #e6462c; font-weight: 600">¥ {{ scope.row.subsidyAmount }}</span>
+          <span v-else style="color: #98a2b3">-</span>
         </template>
       </el-table-column>
       <el-table-column label="已申报项目" align="center" prop="declaredProjects" width="110">
         <template #default="scope">
-          <el-tag type="warning" effect="plain">{{ scope.row.declaredProjects }} 项</el-tag>
+          <span style="color: #98a2b3">-</span>
         </template>
       </el-table-column>
       <el-table-column label="参保人数" align="center" prop="insuredCount" width="100">
-        <template #default="scope">{{ scope.row.insuredCount }} 人</template>
+        <template #default="scope">{{ scope.row.insuredCount != null ? scope.row.insuredCount + ' 人' : '-' }}</template>
       </el-table-column>
       <el-table-column label="创建人" align="center" prop="creatorName" />
       <el-table-column
@@ -175,11 +176,11 @@ const insuredBand = ref<number | undefined>(undefined)
 
 // 参保人数真实值缓存：liqi_member 与 liqi_enterprise 按 id 一一对应（同一批深圳湾生态园企业），
 // 会员表无参保人数，故从企业库按 id 回填真实 insuredCount。
-const insuredMap = ref<Record<string, number>>({})
-const loadInsuredMap = async () => {
+const entMap = ref<Record<string, any>>({})
+const loadEntMap = async () => {
   const size = 200 // 后端每页上限 200，分页拉全量构建映射
-  const map: Record<string, number> = {}
-  const collect = (rows: any[]) => rows.forEach((e) => (map[String(e.id)] = e.insuredCount))
+  const map: Record<string, any> = {}
+  const collect = (rows: any[]) => rows.forEach((e) => (map[String(e.id)] = e))
   try {
     const first = await getEnterprisePage({ pageNo: 1, pageSize: size })
     collect(first.list || [])
@@ -188,24 +189,27 @@ const loadInsuredMap = async () => {
     for (let p = 2; p <= pages; p++) reqs.push(getEnterprisePage({ pageNo: p, pageSize: size }))
     const rest = await Promise.all(reqs)
     rest.forEach((d) => collect(d.list || []))
-    insuredMap.value = map
+    entMap.value = map
   } catch {
-    insuredMap.value = map
+    entMap.value = map
   }
 }
 
 /**
- * 行数据补充：
- * - 参保人数 insuredCount：取企业库真实值（按 id 关联回填）
- * - 获取补贴金额 / 已申报项目：暂无数据源，按 id 确定性派生（演示用，接入后替换）
+ * 行数据补充：全部取自企业库（liqi_enterprise），不再使用演示派生值。
+ * - insuredCount 参保人数、subsidyTotalMoney 补贴总金额均为企业库字段；
+ * - 已申报项目数暂无数据源，展示为“-”。
  */
 const enrichRow = (row: any) => {
-  const seed = Number(row.id) || 1
+  const ent = entMap.value[String(row.id)] || {}
   return {
     ...row,
-    insuredCount: insuredMap.value[String(row.id)] ?? 0, // 真实参保人数
-    subsidyAmount: ((seed * 13) % 480) + 20, // 20~499 万（演示）
-    declaredProjects: (seed * 7) % 8 // 0~7 项（演示）
+    insuredCount: ent.insuredCount ?? null,
+    subsidyAmount: ent.subsidyTotalMoney ?? null,
+    declaredProjects: null,
+    industry: ent.industryLv1Name || ent.industry || row.industry || '',
+    regStatus: ent.regStatus || '',
+    companyScale: ent.companyScale ?? null
   }
 }
 
@@ -213,7 +217,7 @@ const enrichRow = (row: any) => {
 const getList = async () => {
   loading.value = true
   try {
-    if (!Object.keys(insuredMap.value).length) await loadInsuredMap()
+    if (!Object.keys(entMap.value).length) await loadEntMap()
     const data = await getMemberPage(queryParams)
     list.value = (data.list || []).map(enrichRow)
     total.value = data.total
@@ -226,7 +230,7 @@ const getList = async () => {
 const displayList = computed(() => {
   if (insuredBand.value === undefined || insuredBand.value === null) return list.value
   const b = INSURED_BANDS[insuredBand.value]
-  return list.value.filter((r) => r.insuredCount >= b.min && r.insuredCount <= b.max)
+  return list.value.filter((r) => r.insuredCount != null && r.insuredCount >= b.min && r.insuredCount <= b.max)
 })
 
 const handleQuery = () => {

@@ -73,6 +73,7 @@
                   <span v-else-if="p.state === 'called'" class="ph-st miss">已拨未通</span>
                   <el-button size="small" type="primary" :icon="PhoneFilled" plain @click="dial(e, p)">拨打</el-button>
                 </div>
+                <span v-if="!e.phones.length" class="ph-empty">企业库暂无联系号码，可手动新增</span>
                 <el-button class="ph-add" size="small" text @click="promptAddPhone(e)">+ 号码</el-button>
               </div>
             </div>
@@ -433,6 +434,7 @@ onBeforeUnmount(() => {
 .c-src { font-size: 12px; color: #909aa8; margin-left: 4px; }
 .c-meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 12.5px; color: #6b7a90; margin: 8px 0 10px; }
 .c-phones { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ph-empty { font-size: 12px; color: #98a2b3; }
 .ph {
   display: flex; align-items: center; gap: 8px;
   background: #f6f8fc; border: 1px solid #eef1f6; border-radius: 8px; padding: 5px 10px;

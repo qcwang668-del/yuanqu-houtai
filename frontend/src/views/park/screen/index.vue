@@ -11,7 +11,6 @@
         <div class="rt">
           <span class="lv"><i></i>数据实时更新中</span>
           <span class="mono" id="dashTime">2026-08-24 09:41:26</span>
-          <button class="btn g sm" @click="dashFinale">▶ 播放收尾闭环</button>
           <button class="exit-btn" @click="exitScreen">✕ 退出大屏</button>
         </div>
       </div>
@@ -24,7 +23,7 @@
             <div class="badges" id="dashBadges"></div>
             <div style="height:1px;background:rgba(90,150,230,.2);margin:7px 0"></div>
             <div class="donut-wrap">
-              <div class="donut" id="donut1"><div class="cn"><b class="mono">1,326</b><span>园区企业</span></div></div>
+              <div class="donut" id="donut1"><div class="cn"><b class="mono" id="dashTotalCo">0</b><span>园区企业</span></div></div>
               <div class="lg" id="lg1"></div>
             </div>
             <div class="priv-note" id="trackNote"></div>
@@ -127,64 +126,26 @@ onMounted(() => {
   function go(_k: string) { toast('该模块请在完整系统中查看（当前为园区可视化大屏）') }
 
   /* ==================== 大屏数据 ==================== */
-  const DASH_RANK = [
-    { n: '深圳精测半导体设备', c: 9, a: '286 万', hero: false },
-    { n: '深圳绿动新能源', c: 8, a: '243 万', hero: false },
-    { n: '深圳市鹏芯光电', c: 7, a: '198 万', hero: false },
-    { n: '深圳鲲鹏生物医药', c: 6, a: '176 万', hero: false },
-    { n: '深圳智联工业互联', c: 6, a: '154 万', hero: false },
-    { n: '深圳市湾芯智能科技', c: 4, a: '45 万', hero: true },
-    { n: '深圳前海云智数据', c: 4, a: '92 万', hero: false },
-    { n: '深圳湾创智能装备', c: 3, a: '78 万', hero: false },
-    { n: '深圳启元材料科技', c: 3, a: '64 万', hero: false },
-    { n: '深圳市宏图光学', c: 3, a: '58 万', hero: false }
-  ]
-  const DASH_DYN = [
-    ['资质', '深圳精测半导体设备 新增<b>国家专精特新小巨人</b>认定', '09:38'],
-    ['知产', '深圳市湾芯智能科技 新增<b>发明专利授权 2 件</b>（累计 18 件）', '09:31'],
-    ['资质', '深圳绿动新能源 通过<b>知识产权贯标</b>认证', '09:22'],
-    ['申报', '深圳鲲鹏生物医药 提交<b>研发投入资助</b>申报', '09:15'],
-    ['到账', '深圳市鹏芯光电 高企奖补<b>14 万元到账</b>', '09:02'],
-    ['资质', '深圳前海云智数据 入库<b>科技型中小企业</b>', '08:54'],
-    ['知产', '深圳湾创智能装备 新增<b>实用新型 5 件</b>', '08:47']
-  ]
-  const DASH_VITAL = { co: 1326, addIn: 47, addNew: 29, moveIn: 18, out: 23, cancel: 9, moveOut: 14, insured: 38620, insuredUp: 4.2 }
-  const DASH_DEST = [
-    ['东莞松山湖片区', 5, '成本导向 · 制造扩产'],
-    ['深圳市外其他城市', 4, '总部迁移'],
-    ['龙岗坂田片区', 2, '就近扩租'],
-    ['宝安新桥片区', 2, '厂房需求'],
-    ['市内其他区园区', 1, '租约到期未续']
-  ]
-  const DASH_QUAL = [
-    ['🏅', '国家高新技术企业', 386, '+22 本季'],
-    ['⭐', '专精特新', 118, '国家级 26 / 省级 92'],
-    ['📈', '上市企业', 23, 'A 股 14 / 港股 6 / 新三板 3'],
-    ['🌐', '500 强关联', 11, '总部 3 / 子公司 8'],
-    ['🏛', '国企央企', 34, '央属 9 / 省市属 25'],
-    ['🏭', '规模以上企业', 162, '占比 12.2%']
-  ]
-  const DASH_RISK = { total: 96, high: 14, mid: 82, low: 214, none: 1016, newUp: 11, handled: 68, doing: 19, todo: 9 }
+  // 企业榜单（由企业库 stats.topCapital / topList 填充）
+  const DASH_RANK: any[] = []
+  // 园区企业动态：暂无数据源（需资质/知产/申报事件表），置空不造假数据
+  const DASH_DYN: any[] = []
+  // 企业总数 co 由企业库填充；迁入/迁出/参保总数企业库无数据源，置 0 展示为“-”
+  const DASH_VITAL = { co: 0, addIn: 0, addNew: 0, moveIn: 0, out: 0, cancel: 0, moveOut: 0, insured: 0, insuredUp: 0 }
+  // 迁出去向：暂无数据源
+  const DASH_DEST: any[] = []
+  // 企业分布卡片（由企业库规模分布填充）
+  const DASH_QUAL: any[] = []
+  // 经营风险：企业库风险子表暂无数据，置 0
+  const DASH_RISK = { total: 0, high: 0, mid: 0, low: 0, none: 0, newUp: 0, handled: 0, doing: 0, todo: 0 }
   // 行业赛道环图数据（由企业库 industry_lv1_name 分布填充）
   const DONUT_COLORS = ['#1f7bd6', '#25d0e0', '#d9a13b', '#17a97a', '#7a63d8', '#5d7290', '#f08b32', '#e0483c']
   const DASH_DONUT: any[] = []
+  let DASH_ENRICHED = 0
   let DASH_SMALL_PCT = '-'
-  const DASH_TRACK_RANK = [
-    { n: 'AI 半导体 / 集成电路', c: 318, a: '6,240 万' },
-    { n: '软件与信息服务', c: 286, a: '4,180 万' },
-    { n: '高端装备制造', c: 214, a: '3,520 万' },
-    { n: '其他产业', c: 170, a: '1,460 万' },
-    { n: '生物医药', c: 176, a: '2,860 万' },
-    { n: '新能源新材料', c: 162, a: '2,140 万' }
-  ]
-  const DASH_QUAL_RANK = [
-    { n: 'AI 半导体 / 集成电路', c: 18, a: '高企 11 / 专精 7' },
-    { n: '高端装备制造', c: 12, a: '高企 8 / 专精 4' },
-    { n: '软件与信息服务', c: 10, a: '高企 7 / 专精 3' },
-    { n: '生物医药', c: 8, a: '高企 5 / 专精 3' },
-    { n: '新能源新材料', c: 7, a: '高企 4 / 专精 3' },
-    { n: '其他产业', c: 3, a: '高企 2 / 专精 1' }
-  ]
+  const DASH_TRACK_RANK: any[] = []
+  // 资质新增榜：暂无数据源
+  const DASH_QUAL_RANK: any[] = []
 
   let dashInited = false
   let rankMode = 'fund'
@@ -222,8 +183,10 @@ onMounted(() => {
       unit = (r) => `${r.c} 家 · ${r.a}`
     }
     rk = rk.slice(0, 8)
-    const mx = Math.max(...rk.map((r) => r.c))
-    const box = $('#dashRank'); if (box) box.innerHTML = rk.map((r, i) => `<div class="r ${r.hero ? 'hero' : ''}">
+    const mx = rk.length ? Math.max(...rk.map((r) => r.c)) : 1
+    const box = $('#dashRank')
+    if (box && !rk.length) box.innerHTML = '<div class="r" style="opacity:.6">暂无数据</div>'
+    else if (box) box.innerHTML = rk.map((r, i) => `<div class="r ${r.hero ? 'hero' : ''}">
      <span class="no">${i + 1}</span><span class="nm rank-ent" title="${r.n}" data-ent="${r.n}" style="cursor:pointer">${r.n}${r.hero ? ' ★' : ''}</span>
      <span class="bb"><i data-w="${Math.round((r.c / mx) * 100)}"></i></span>
      <span class="vv mono">${unit(r)}</span></div>`).join('')
@@ -259,6 +222,7 @@ onMounted(() => {
      <div class="v mono">${q[2]}<em>家</em></div>
      <div class="s ${(q[3] as string).indexOf('+') === 0 ? '' : 'mut'}">${q[3]}</div></div>`).join('')
     drawDonut('donut1', 'lg1', DASH_DONUT, V.co)
+    const dtc = $('#dashTotalCo'); if (dtc) dtc.textContent = V.co.toLocaleString()
     const donutSum = DASH_DONUT.reduce((a: number, d: any) => a + (Number(d[1]) || 0), 0) || 1
     const top3 = DASH_DONUT.slice(0, 3).reduce((a: number, d: any) => a + (Number(d[1]) || 0), 0)
     const tn = $('#trackNote'); if (tn) tn.innerHTML = `主导产业集中度：前 3 大行业合计 <b style="color:#ffd28a">${((top3 / donutSum) * 100).toFixed(1)}%</b> · 中小微企业占比 <b style="color:#ffd28a">${DASH_SMALL_PCT}%</b>`
@@ -271,7 +235,7 @@ onMounted(() => {
       const bi = $('#bandIn'); if (bi) bi.style.height = Math.round((V.addIn / mxF) * 33) + 'px'
       const bo = $('#bandOut'); if (bo) bo.style.height = Math.round((V.out / mxF) * 33) + 'px'
     }, 120)
-    const mxD = Math.max(...DASH_DEST.map((d) => d[1] as number))
+    const mxD = DASH_DEST.length ? Math.max(...DASH_DEST.map((d: any) => d[1] as number)) : 1
     const fd = $('#flowDest'); if (fd) fd.innerHTML = DASH_DEST.map((d) => `<div class="fr">
      <span class="nm" title="${d[2]}">${d[0]}</span>
      <span class="bb"><i data-w="${Math.round(((d[1] as number) / mxD) * 100)}"></i></span>
@@ -288,7 +252,9 @@ onMounted(() => {
      <div class="lb"><span>${l[0]}</span><b class="mono">${l[1]} 家 · ${(((l[1] as number) / V.co) * 100).toFixed(1)}%</b></div>
      <div class="bar"><i data-w="${(((l[1] as number) / V.co) * 100).toFixed(1)}" style="background:${l[2]}"></i></div></div>`).join('')
     renderRank()
-    const dy = $('#dashDyn'); if (dy) dy.innerHTML = DASH_DYN.map((d) => `<div class="it"><span class="tg">${d[0]}</span>
+    const dy = $('#dashDyn')
+    if (dy && !DASH_DYN.length) dy.innerHTML = '<div class="it" style="opacity:.6"><div class="mn">暂无企业动态数据源</div></div>'
+    else if (dy) dy.innerHTML = DASH_DYN.map((d: any) => `<div class="it"><span class="tg">${d[0]}</span>
      <div class="mn">${d[1]}<div class="dd">${d[2]}</div></div></div>`).join('')
     const kpi = $('#dashKpi'); if (kpi) kpi.innerHTML = `
      <div class="b"><span>政策触达企业</span><b><span data-num="1268">0</span><em>家</em></b><div class="up">↑ 触达率 82%</div></div>
@@ -297,15 +263,10 @@ onMounted(() => {
      <div class="b hl"><span>补贴到账金额</span><b><span data-num="1.86">0</span><em>亿元</em></b><div class="up">预估总额 4.32 亿元</div></div>`
     setTimeout(() => { const r1 = $('#reachBar'); if (r1) r1.style.width = '82%'; const c1 = $('#convBar'); if (c1) c1.style.width = '38.3%' }, 120)
     const tk = $('#tk'); if (tk) tk.innerHTML = [...Array(2)].map(() =>
-      `<span>🏢 在园企业 <b>1,326</b> 家 · 本季净增 <b>+${net}</b> 家</span>
-       <span>🎥 政策宣讲直播覆盖率 <b>76%</b>（观看企业 1,008 家）</span>
-       <span>🎯 招商线索池 <b>3,860</b> 条 · 本季签约落地 <b>17</b> 家</span>
-       <span>📞 AI 累计触达企业 <b>2,140</b> 家 · 识别意向 <b>386</b> 家</span>
-       <span>📮 政策触达率 <b>82%</b>（原 &lt;30%）</span>
-       <span>💰 补贴到账 <b>1.86 亿元</b></span>
-       <span>🗄 政策数据 <b>2,300 万+</b> 条 · 日更新 <b>29,966</b> 条</span>
-       <span>⚡ AI 平均匹配响应 <b>0.8 秒</b></span>
-       <span>🏙 在营园区 <b>3</b> 个（深圳湾生态园 512 / 创智天地 386 / 光明科技园 428）· 筹建 <b>1</b> 个</span>`).join('')
+      `<span>🏢 在园企业 <b>${V.co.toLocaleString()}</b> 家</span>
+       <span>✅ 已补全工商信息 <b>${(DASH_ENRICHED || 0).toLocaleString()}</b> 家</span>
+       <span>📊 行业赛道 <b>${DASH_DONUT.length}</b> 个一级分类</span>
+       <span>📍 数据源：企业库（liqi_enterprise）· 企业数据平台同步</span>`).join('')
     animateNums(root)
     if (!dashInited) { dashInited = true; timers.push(window.setInterval(tickTime, 1000), window.setInterval(rollDyn, 3600)) }
   }
@@ -322,15 +283,8 @@ onMounted(() => {
     if (box.firstElementChild) box.appendChild(box.firstElementChild)
   }
   function dashFinaleFn() {
-    rankMode = 'fund'; $$('#rankTabs button').forEach((b, i) => b.classList.toggle('on', i === 0))
-    const hero = DASH_RANK.find((r) => r.hero); if (hero) { hero.c = 6; hero.a = '173 万' }
-    toast('湾芯科技研发资助 60 万 + 专精特新 30 万获批，累计到账 173 万，故事闭环 ✓')
-    DASH_DYN.unshift(['到账', '深圳市湾芯智能科技 <b>研发投入资助 60 万元到账</b>（累计 173 万）', '09:42'])
-    const fc = $('#footClose'); if (fc) fc.innerHTML = '累计补贴到账 173 万元，闭环完成 ✓'
-    initDash()
-    const first = $$('#dashDyn .it')[0]; if (first) first.classList.add('new')
-    const heroRow = $('#dashRank .r.hero') as HTMLElement | null
-    if (heroRow) { heroRow.scrollIntoView({ block: 'nearest' }); heroRow.style.transition = '.4s'; heroRow.style.background = 'rgba(190,140,40,.22)'; heroRow.style.borderRadius = '8px' }
+    // 企业库已统一为真实数据，不再注入演示故事
+    toast('当前大屏指标均取自企业库真实数据；补贴、资质、动态等维度待接入数据源后展示')
   }
   ;(window as any).__pkDashFinale = dashFinaleFn
 
@@ -366,6 +320,7 @@ onMounted(() => {
     request.get({ url: '/liqi/enterprise/stats' }).then((stats: any) => {
     if (stats && stats.total) {
       DASH_VITAL.co = stats.total
+      DASH_ENRICHED = Number(stats.enriched) || 0
       // 行业赛道环图：取企业库一级行业分布（前 8 项）
       if (Array.isArray(stats.industryLv1) && stats.industryLv1.length) {
         DASH_DONUT.length = 0
