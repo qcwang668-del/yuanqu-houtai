@@ -12,6 +12,10 @@ dist/
 build/
 *.whl
 
+# 例外：frontend/build 是 Vite 插件配置源码，不是构建产物，必须入库
+!frontend/build/
+!frontend/build/**
+
 # 环境变量
 .env
 .env.local
