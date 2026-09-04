@@ -10,6 +10,14 @@ export interface EnterpriseContact {
   platform: string
   type: 'mobile' | 'tel' | 'email'
 }
+export interface FinancingRecord {
+  id: number | string
+  rzTime: string
+  rzAmt: string
+  rzRound: string
+  investors: string
+}
+
 export interface EnterpriseProject {
   title: string
   org: string
@@ -63,6 +71,7 @@ export interface EnterpriseDetail {
   projectTrend: { years: string[]; subsidy: number[]; count: number[] }
   projectTotal: number
   projects: EnterpriseProject[]
+  financing: FinancingRecord[]
   richTabs?: RichTab[]
 }
 
@@ -77,6 +86,43 @@ function fmtD(d: any): string {
   return d || '-'
 }
 
+/** 日期时间格式化（融资时间只到日）：兼容 [y,m,d,H,i,s] 数组与字符串 */
+function fmtDT(d: any): string {
+  if (d === null || d === undefined || d === '') return '—'
+  if (Array.isArray(d)) return `${d[0]}-${String(d[1]).padStart(2, '0')}-${String(d[2]).padStart(2, '0')}`
+  // 后端 LocalDateTime 默认序列化为毫秒时间戳
+  if (typeof d === 'number') {
+    const dt = new Date(d)
+    if (isNaN(dt.getTime())) return '—'
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+  }
+  const s = String(d)
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`
+  if (/^\d{10,}$/.test(s)) return fmtDT(Number(s))
+  return s
+}
+
+/** 融资金额：空值与「未披露/未透露」统一显示为占位符 */
+function normalizeAmt(v: any): string {
+  const s = (v == null ? '' : String(v)).trim()
+  if (!s || /^(未披露|未透露|未公布|不明确|保密)$/.test(s)) return '—'
+  return s
+}
+
+/** 投资方：JSON 数组字符串 → 「、」拼接的名称串 */
+function parseInvestors(raw: any): string {
+  if (!raw) return '—'
+  if (Array.isArray(raw)) return raw.map((x: any) => x?.name).filter(Boolean).join('、') || '—'
+  try {
+    const arr = JSON.parse(String(raw))
+    if (!Array.isArray(arr)) return '—'
+    return arr.map((x: any) => x?.name).filter(Boolean).join('、') || '—'
+  } catch {
+    return String(raw)
+  }
+}
+
 /** 从后端详情响应（{enterprise, shareholders, contacts, ips, risks, projects}）构建 EnterpriseDetail */
 export function detailFromBackend(payload: any): EnterpriseDetail {
   const e = payload?.enterprise || {}
@@ -85,6 +131,7 @@ export function detailFromBackend(payload: any): EnterpriseDetail {
   const ips = payload?.ips || []
   const risks = payload?.risks || []
   const projects = payload?.projects || []
+  const financing = payload?.financing || []
 
   const tagSource = e.finalShowInfo || e.tags
   const tags: string[] = (tagSource ? String(tagSource).split(/[;；]/).filter(Boolean) : []).slice(0, 6)
@@ -117,8 +164,17 @@ export function detailFromBackend(payload: any): EnterpriseDetail {
     level: ''
   }))
 
+  // 融资记录：后端 rzTime/rzAmt/rzRound/investorInfo → 前端展示结构（时间倒序由后端保证）
+  const financingList: FinancingRecord[] = financing.map((r: any) => ({
+    id: r.id,
+    rzTime: fmtDT(r.rzTime),
+    rzAmt: normalizeAmt(r.rzAmt),
+    rzRound: r.rzRound || '—',
+    investors: parseInvestors(r.investorInfo)
+  }))
+
   // 构建富页签（人员投资、知识产权、经营信息、经营风险、企业发展）
-  const rich = buildRichTabs(e, holders, ips, risks, tags)
+  const rich = buildRichTabs(e, holders, ips, risks, tags, financingList)
 
   return {
     id: String(e.id ?? ''),
@@ -170,13 +226,13 @@ export function detailFromBackend(payload: any): EnterpriseDetail {
     projectTrend: { years: [], subsidy: [], count: [] },
     projectTotal: projects.length,
     projects: projectList,
+    financing: financingList,
     richTabs: rich
   }
 }
 
 /** 构建富页签（人员/投资、知产、经营信息、经营风险、企业发展）——数据全部来自后端 */
-function buildRichTabs(e: any, holders: any[], ips: any[], risks: any[], tags: string[]): RichTab[] {
-  const nm = e.enterpriseName || '该企业'
+function buildRichTabs(e: any, holders: any[], ips: any[], risks: any[], tags: string[], financing: FinancingRecord[] = []): RichTab[] {
   const lp = e.legalPerson || '—'
   return [
     {
@@ -248,6 +304,26 @@ function buildRichTabs(e: any, holders: any[], ips: any[], risks: any[], tags: s
       name: 'growth', label: '企业发展',
       sections: [
         { title: '企业标签', type: 'tags', tags: tags.length ? tags : ['存续'] },
+        {
+          title: '融资概览', type: 'stat',
+          stats: [
+            { label: '融资次数', value: financing.length || '—', unit: financing.length ? '次' : '' },
+            { label: '最新轮次', value: financing.length ? financing[0].rzRound : '—' },
+            { label: '最新融资金额', value: financing.length ? financing[0].rzAmt : '—' },
+            { label: '最新融资时间', value: financing.length ? financing[0].rzTime : '—' }
+          ]
+        },
+        {
+          title: '融资历程', count: financing.length, type: 'table',
+          note: financing.length ? '' : '暂无融资数据',
+          columns: [
+            { prop: 'rzTime', label: '融资时间', width: 120 },
+            { prop: 'rzRound', label: '融资轮次', width: 120 },
+            { prop: 'rzAmt', label: '融资金额', width: 160 },
+            { prop: 'investors', label: '投资方' }
+          ],
+          rows: financing
+        },
         { title: '企业新闻', type: 'table', note: '暂无数据', columns: [{ prop: 'title', label: '标题' }, { prop: 'date', label: '日期', width: 130 }], rows: [] }
       ]
     }
@@ -256,5 +332,5 @@ function buildRichTabs(e: any, holders: any[], ips: any[], risks: any[], tags: s
 
 /** 从后端企业列表行（/liqi/enterprise/page 返回）构造详情（降级方案：仅用主表字段，无子表） */
 export function detailFromParkEntity(e: any): EnterpriseDetail {
-  return detailFromBackend({ enterprise: e, shareholders: [], contacts: [], ips: [], risks: [], projects: [] })
+  return detailFromBackend({ enterprise: e, shareholders: [], contacts: [], ips: [], risks: [], projects: [], financing: [] })
 }

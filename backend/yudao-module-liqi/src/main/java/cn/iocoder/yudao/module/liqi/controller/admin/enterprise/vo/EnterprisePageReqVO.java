@@ -52,6 +52,9 @@ public class EnterprisePageReqVO extends PageParam {
     @Schema(description = "区码（440305 南山区…）")
     private Integer regDistrictCode;
 
+    @Schema(description = "是否融资：true 有融资记录 / false 无融资记录")
+    private Boolean financed;
+
     @Schema(description = "排序字段：insuredCount / regCapitalAmount / establishDate / id")
     private String sortField;
 

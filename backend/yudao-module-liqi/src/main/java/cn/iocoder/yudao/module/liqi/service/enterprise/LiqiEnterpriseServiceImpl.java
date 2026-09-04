@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.liqi.dal.dataobject.enterprise.LiqiEnterpriseDO;
 import cn.iocoder.yudao.module.liqi.dal.dataobject.enterprise.LiqiEnterpriseShareholderDO;
 import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseMapper;
 import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseContactMapper;
+import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseFinancingMapper;
 import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseIpMapper;
 import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseProjectMapper;
 import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseRiskMapper;
@@ -55,6 +56,8 @@ public class LiqiEnterpriseServiceImpl implements LiqiEnterpriseService {
     @Resource
     private LiqiEnterpriseProjectMapper projectMapper;
     @Resource
+    private LiqiEnterpriseFinancingMapper financingMapper;
+    @Resource
     private TycClient tycClient;
     @Resource
     private QiyeDataClient qiyeDataClient;
@@ -75,6 +78,7 @@ public class LiqiEnterpriseServiceImpl implements LiqiEnterpriseService {
             result.put("ips", new ArrayList<>());
             result.put("risks", new ArrayList<>());
             result.put("projects", new ArrayList<>());
+            result.put("financing", new ArrayList<>());
             return result;
         }
         // 各子表均取库内真实数据，无数据时前端展示空态（不再使用示例/演示数据）
@@ -83,6 +87,7 @@ public class LiqiEnterpriseServiceImpl implements LiqiEnterpriseService {
         result.put("ips", ipMapper.selectListByEnterpriseId(id));
         result.put("risks", riskMapper.selectListByEnterpriseId(id));
         result.put("projects", projectMapper.selectListByEnterpriseId(id));
+        result.put("financing", financingMapper.selectListByEnterpriseId(id));
         return result;
     }
 

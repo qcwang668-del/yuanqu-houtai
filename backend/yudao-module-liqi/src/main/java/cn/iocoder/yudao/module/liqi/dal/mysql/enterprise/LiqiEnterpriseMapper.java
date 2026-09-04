@@ -33,6 +33,13 @@ public interface LiqiEnterpriseMapper extends BaseMapperX<LiqiEnterpriseDO> {
                 .geIfPresent(LiqiEnterpriseDO::getEstablishDate, reqVO.getEstablishDateStart())
                 .leIfPresent(LiqiEnterpriseDO::getEstablishDate, reqVO.getEstablishDateEnd())
                 .eqIfPresent(LiqiEnterpriseDO::getRegDistrictCode, reqVO.getRegDistrictCode())
+                // 是否融资：按融资子表有无记录过滤（未传则不限）
+                .exists(Boolean.TRUE.equals(reqVO.getFinanced()),
+                        "SELECT 1 FROM liqi_enterprise_financing f"
+                                + " WHERE f.enterprise_id = liqi_enterprise.id AND f.deleted = 0")
+                .notExists(Boolean.FALSE.equals(reqVO.getFinanced()),
+                        "SELECT 1 FROM liqi_enterprise_financing f"
+                                + " WHERE f.enterprise_id = liqi_enterprise.id AND f.deleted = 0")
                 .orderByAsc(LiqiEnterpriseDO::getId));
     }
 
