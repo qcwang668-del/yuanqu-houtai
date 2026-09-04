@@ -43,6 +43,12 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                     ws: false,
                     changeOrigin: true,
                 },
+                // H5 端 C 端接口（惠企政策 app-api），与 admin-api 同一后端
+                ['/app-api']: {
+                    target: 'http://127.0.0.1:48080',
+                    ws: false,
+                    changeOrigin: true,
+                },
             },
         },
         // 生产预览（build 产物托管）：外网穿透用，代理 /admin-api 到后端
@@ -52,6 +58,12 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             allowedHosts: true,
             proxy: {
                 ['/admin-api']: {
+                    target: 'http://127.0.0.1:48080',
+                    ws: false,
+                    changeOrigin: true,
+                },
+                // H5 端 C 端接口（惠企政策 app-api），与 admin-api 同一后端
+                ['/app-api']: {
                     target: 'http://127.0.0.1:48080',
                     ws: false,
                     changeOrigin: true,

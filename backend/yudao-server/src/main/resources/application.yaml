@@ -215,6 +215,35 @@ qixin:
     endpoint: /mcp/
     token: ${QIXIN_MCP_TOKEN:}
 
+
+# 力企云 DaaS 企业数据平台接入（企业模糊匹配 qiye-fuzzy-matching + 企业基本信息 qiye-base-info）
+# appKey/appSecret 由平台分配；生产环境建议用环境变量 DaaS_APP_KEY / DaaS_APP_SECRET 覆盖，勿把真实密钥提交入库
+daas:
+  base-url: https://daas.liqicloud.com
+  app-key: ${DaaS_APP_KEY:LQC_b76906b4dL07AKRqgU4P}
+  app-secret: ${DaaS_APP_SECRET:25678de6f99df113d083afeeeb723f3e}
+  timeout-get-ms: 30000
+  timeout-post-ms: 60000
+
+# AISpider 大模型服务接入（企业政策智能匹配 company_policy_match 等，drf-yasg，接口统一前缀 /api）
+# 该服务无需鉴权；企业政策智能匹配为同步大模型任务，实测约 40~60s，超时需放宽。可用环境变量 BIGMODEL_BASE_URL 覆盖
+bigmodel:
+  base-url: ${BIGMODEL_BASE_URL:http://8.135.67.165:8000}
+  timeout-ms: 120000
+
+# 力企云 - H5 端政策数据源（DaaS 政策库 policy-list / policy-detail）
+# remote-enabled=true 时启用真实政策，覆盖内置 MockPolicyProvider；城市默认深圳市 440300。
+# 平台限流实测约 10 次/分钟（超限返回 400，冷却约 90s），故由本地快照承担分页与关键词筛选。
+liqi:
+  policy:
+    remote-enabled: ${LIQI_POLICY_REMOTE_ENABLED:false}
+    province-code: ${LIQI_POLICY_PROVINCE:440000}   # 广东省
+    city-code: ${LIQI_POLICY_CITY:440300}           # 深圳市（H5 端固定城市入参）
+    area-code: ${LIQI_POLICY_AREA:}                 # 区县编码，留空=全市
+    prefetch-pages: 8                               # 预取页数，8 * 50 = 400 条
+    list-cache-minutes: 30                          # 列表快照缓存时长
+    detail-cache-hours: 24                          # 详情缓存时长
+    cooldown-seconds: 90                            # 远程失败后的冷却时间，避免打穿限流
 yudao:
   ai:
     gemini: # 谷歌 Gemini

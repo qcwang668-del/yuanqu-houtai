@@ -26,6 +26,10 @@ public class LiqiParkDO extends TenantBaseDO {
     private String addressKeyword;
     /** 城市 */
     private String city;
+    /** 外部企业查询-省（区域搜索入参，如 广东省） */
+    private String regionProvince;
+    /** 外部企业查询-区/县（区域搜索入参，如 南山区） */
+    private String regionDistrict;
     /** 状态：0=启用，1=停用 */
     private Integer status;
 

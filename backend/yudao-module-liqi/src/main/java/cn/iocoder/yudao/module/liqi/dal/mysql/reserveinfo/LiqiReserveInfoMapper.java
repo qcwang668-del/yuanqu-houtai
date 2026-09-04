@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.liqi.dal.mysql.reserveinfo;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
@@ -25,4 +26,16 @@ public interface LiqiReserveInfoMapper extends BaseMapperX<LiqiReserveInfoDO> {
                 .orderByDesc(LiqiReserveInfoDO::getId));
     }
 
+
+    /**
+     * H5「我的申报」分页：按会员用户 + 预留方式=我要申报(1) + 来源=小程序(1) 过滤。
+     * 改道后 H5 政策申报统一写入预留信息表。
+     */
+    default PageResult<LiqiReserveInfoDO> selectAppApplyPage(Long userId, PageParam pageParam) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<LiqiReserveInfoDO>()
+                .eq(LiqiReserveInfoDO::getUserId, userId)
+                .eq(LiqiReserveInfoDO::getReserveWay, 1)
+                .eq(LiqiReserveInfoDO::getSource, 1)
+                .orderByDesc(LiqiReserveInfoDO::getId));
+    }
 }

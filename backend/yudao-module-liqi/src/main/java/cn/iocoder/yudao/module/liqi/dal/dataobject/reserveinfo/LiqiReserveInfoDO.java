@@ -24,6 +24,8 @@ public class LiqiReserveInfoDO extends TenantBaseDO {
     private String reserveUserName;
     /** 手机号 */
     private String reservePhone;
+    /** H5 会员用户ID（H5「政策申报」留资时回写，用于“我的申报”按用户隔离；0/NULL=游客提交） */
+    private Long userId;
     /** 来源：1=小程序，2=PC端 */
     private Integer source;
     /** 公司名称 */
