@@ -53,6 +53,18 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="是否融资" prop="financed">
+        <el-select
+          v-model="queryParams.financed"
+          placeholder="请选择是否融资"
+          clearable
+          class="!w-200px"
+          @change="handleQuery"
+        >
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" />搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" />重置</el-button>
@@ -161,7 +173,8 @@ const queryParams = reactive({
   pageSize: 10,
   enterpriseName: undefined,
   phone: undefined,
-  parkId: undefined
+  parkId: undefined,
+  financed: undefined
 })
 
 // ------- 参保人数分档（前端筛选，暂无后端字段，接入后改服务端） -------

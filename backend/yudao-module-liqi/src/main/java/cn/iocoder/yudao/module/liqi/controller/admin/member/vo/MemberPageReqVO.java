@@ -22,6 +22,9 @@ public class MemberPageReqVO extends PageParam {
     @Schema(description = "关联园区编号（选择后按园区地址关键词筛选注册地址）")
     private Long parkId;
 
+    @Schema(description = "是否融资：true 有融资记录 / false 无融资记录")
+    private Boolean financed;
+
     /** 内部使用：由 parkId 解析出的园区地址关键词，用于 LIKE 匹配注册地址（不对外暴露） */
     private String registerAddressKeyword;
 

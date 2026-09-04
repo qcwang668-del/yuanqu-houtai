@@ -19,16 +19,6 @@
           @keyup.enter="handleQuery"
           @clear="handleQuery"
         />
-        <el-select
-          v-model="queryParams.financed"
-          placeholder="是否融资"
-          clearable
-          class="ent-filter"
-          @change="handleQuery"
-        >
-          <el-option label="是" :value="true" />
-          <el-option label="否" :value="false" />
-        </el-select>
         <el-button type="primary" @click="handleQuery">搜索</el-button>
         <el-button plain @click="pickAllPage">{{ allPicked ? '取消全选' : '全选本页' }}</el-button>
         <el-button type="success" :disabled="picked.size === 0" @click="addToCallList">
@@ -218,12 +208,7 @@ const goBack = () => {
 const loading = ref(false)
 const list = ref<any[]>([])
 const total = ref(0)
-const queryParams = reactive<{
-  pageNo: number
-  pageSize: number
-  enterpriseName: string | undefined
-  financed: boolean | undefined
-}>({ pageNo: 1, pageSize: 10, enterpriseName: undefined, financed: undefined })
+const queryParams = reactive({ pageNo: 1, pageSize: 10, enterpriseName: undefined })
 
 // 成立时间：后端 LocalDate 序列化为 [y,m,d] 数组
 const fmtDate = (d: any) => {
@@ -284,9 +269,6 @@ onMounted(() => getList())
 }
 .ent-search {
   width: 240px;
-}
-.ent-filter {
-  width: 120px;
 }
 .ent-list {
   display: flex;
