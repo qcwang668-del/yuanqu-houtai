@@ -1,0 +1,6 @@
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/00_首页概览.mp4'
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/01_平台管理-用户管理.mp4'
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/02_平台管理-匹配线索.mp4'
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/03_企业管理-园区客户.mp4'
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/04_我的导入导出.mp4'
+file '/home/fangnan/PycharmProjects/u667a-u8fdc-u529b-u4f01-saas/e2e/demo-video/evidence/video/clips/05_系统管理-网站配置.mp4'

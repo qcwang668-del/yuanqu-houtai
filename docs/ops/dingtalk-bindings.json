@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "desc": "本项目绑定的钉钉群台账（见 CLAUDE.md §5）。用 查找钉钉机器人绑定群 skill 查出后固化到这里，推送时遍历 groups。",
+    "how_to_refresh": "python3 ~/.claude/skills/查找钉钉机器人绑定群/scripts/find_binding.py 智远力企-saas --json",
+    "schema": {
+      "group_name": "钉钉群名",
+      "conversation_id": "群会话ID cid...==（入站路由 & 应用机器人出站都用它）",
+      "channel": "webhook / app_robot",
+      "inbound": "是否在 bridge_state.json 有入站路由（true/false）",
+      "outbound": "是否在 Robot 表有出站机器人（true/false）",
+      "robot_name": "出站机器人名称（Robot 表）",
+      "secret_source": "access_token/secret 的来源（后台 .env / Nacos），禁止写明文"
+    }
+  },
+  "groups": [
+    {
+      "group_name": "发布通知群",
+      "conversation_id": "",
+      "channel": "webhook",
+      "inbound": false,
+      "outbound": true,
+      "robot_name": "智远力企-saas 发布通知机器人",
+      "secret_source": ".env: DING_RELEASE_WEBHOOK / DING_RELEASE_SECRET（加签，禁止硬编码）",
+      "note": "里程碑/发布上线推送用；每次发布必带可达测试环境 + 测试报告链接（见 CLAUDE.md「里程碑/发布上线必推钉钉」铁律）"
+    }
+  ]
+}

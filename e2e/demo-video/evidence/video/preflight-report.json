@@ -1,0 +1,149 @@
+[
+  {
+    "page": "首页概览",
+    "scene": 0,
+    "action": "say",
+    "ok": true,
+    "detail": "纯口播(无需断言)"
+  },
+  {
+    "page": "首页概览",
+    "scene": 1,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "首页概览",
+    "scene": 2,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "首页概览",
+    "scene": 3,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "平台管理-用户管理",
+    "scene": 0,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "平台管理-用户管理",
+    "scene": 1,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(3个)"
+  },
+  {
+    "page": "平台管理-用户管理",
+    "scene": 2,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(3个)"
+  },
+  {
+    "page": "平台管理-用户管理",
+    "scene": 3,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "平台管理-匹配线索",
+    "scene": 0,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "平台管理-匹配线索",
+    "scene": 1,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(3个)"
+  },
+  {
+    "page": "平台管理-匹配线索",
+    "scene": 2,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(2个)"
+  },
+  {
+    "page": "企业管理-园区客户",
+    "scene": 0,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "企业管理-园区客户",
+    "scene": 1,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(3个)"
+  },
+  {
+    "page": "企业管理-园区客户",
+    "scene": 2,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "企业管理-园区客户",
+    "scene": 3,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(2个)"
+  },
+  {
+    "page": "我的导入导出",
+    "scene": 0,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(3个)"
+  },
+  {
+    "page": "我的导入导出",
+    "scene": 1,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "我的导入导出",
+    "scene": 2,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(2个)"
+  },
+  {
+    "page": "系统管理-网站配置",
+    "scene": 0,
+    "action": "point",
+    "ok": true,
+    "detail": "元素全部命中(1个)"
+  },
+  {
+    "page": "系统管理-网站配置",
+    "scene": 1,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(2个)"
+  },
+  {
+    "page": "系统管理-网站配置",
+    "scene": 2,
+    "action": "sweep",
+    "ok": true,
+    "detail": "元素全部命中(2个)"
+  }
+]

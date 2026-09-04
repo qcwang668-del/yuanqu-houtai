@@ -1,0 +1,188 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "schema": {
+      "date": "YYYY-MM-DD 推送日期",
+      "topic_key": "主题归一化关键字，用于去重 grep",
+      "title": "钉钉消息显示的主题",
+      "doc_url": "当前有效的文档 URL",
+      "doc_url_history": "历史 URL 数组",
+      "dingtalk_response": "钉钉 API 返回 {errcode, errmsg}",
+      "status": "pending / resolved / superseded",
+      "note": "备注（首次/补充/作废原因等）"
+    }
+  },
+  "pushes": [
+    {
+      "date": "2026-08-25",
+      "topic_key": "iron-rule-milestone-release-push",
+      "title": "AI 自动通知 · 新增项目铁律",
+      "doc_url": "",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "resolved",
+      "note": "登记「里程碑/发布上线必推钉钉」铁律并向发布通知群公告；webhook 加签（secret 存 .env: DING_RELEASE_SECRET）"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "liqi-saas-9modules-1to1-clone-done",
+      "title": "AI 自动通知 · 力企云SaaS 1:1复刻完成",
+      "doc_url": "http://106.53.136.31:19000/media/0afcff7c-4975-44ad-9404-64f91fd06dff.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "9大模块(平台管理/企业管理/线索/会员/网站配置)芋道底座1:1复刻，编译通过+9接口全通+E2E全绿；经默认通知群 webhook 推送；系统入口为 pinggy 临时穿透。绑定群台账未填充实际群，仅推默认群"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "park-screen-visualization-menu-online",
+      "title": "AI 通知 · 园区可视化大屏上线",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/park-screen-20260826.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "新增「园区可视化大屏」(深投控·智慧园区惠企政策服务总览·单屏)：SFC views/park/screen/index.vue + system_menu id=2080 + E2E 7截图全绿。经默认通知群 webhook 推送；报告存 MinIO liqi-attachments。绑定群台账仅默认群，发布通知群 cid 未填充"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "smart-investment-ranking-list-online",
+      "title": "AI 通知 · 智慧招商/榜单招商上线",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/investment-ranking-20260826.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "新增一级菜单智慧招商(system_menu 2081 目录)+子菜单榜单招商(2082→investment/rankingList/index)；卡片目录页1:1还原截图(政府认定12/平台特色4/商业综合14)+收藏交互；E2E 5截图全绿；已过铁律4外网可达自检；经默认通知群 webhook 推送"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "smart-investment-map-invest-online",
+      "title": "AI 通知 · 智慧招商/地图招商上线",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/investment-map-20260826.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "智慧招商新增子菜单地图招商(system_menu 2083→investment/mapInvest/index)；复用项目内置百度地图BMapGL做真交互(圈选/拖动/半径圈/编号标记/点弹窗)+右侧多维筛选14项+企业列表分页；1:1还原截图；E2E 5截图全绿；已过铁律4外网可达自检；经默认通知群 webhook 推送"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "chain-invest-industry-plan",
+      "title": "AI 通知 · 产业链招商需求方案",
+      "doc_url": "http://120.79.142.141/liqi-attachments/plans/chain-invest-industry-plan-20260826.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "产业链招商『先选产业(产业链图谱)→组合条件→筛客户群体』设计方案；已推发布通知群；先不开发，待评审确认后进 P0"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "chain-invest-p0-industry-select",
+      "title": "AI 通知 · 产业链招商 P0 上线",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/investment-chain-p0-20260826.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "P0 落地:先选产业(产业链图谱4主导产业)→自动注入产业默认条件(所属行业代码+经营范围关键词)→叠加241字段组合筛客户群体;E2E全绿(11步/8图);纯前端;推发布通知群"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "liqi-demo-video-v1",
+      "title": "AI 通知 · 力企云说明视频 v1.0",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/liqi-demo-video-20260826.html",
+      "doc_url_history": [],
+      "groups": [
+        "通用通知群(§3 webhook)",
+        "发布通知群(加签)"
+      ],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "webapp-demo-video 技能生成 6 模块说明视频(115s),视频直链 videos/liqi-demo-20260826.mp4"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "系统说明书",
+      "title": "AI 通知 · 智远力企 SaaS 系统说明书 v1.0",
+      "doc_url": "http://120.79.142.141/liqi-attachments/docs/system-manual-v1.html",
+      "doc_url_history": [],
+      "groups": [
+        "通用通知群(§3 webhook)",
+        "发布通知群(加签)"
+      ],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "系统说明书 v1.0(9复刻模块+招商/园区扩展),HTML源 deploy/reports/系统说明书.html,MD源 docs/系统说明书.md,系统入口120.79.142.141:8000已复测200"
+    },
+    {
+      "date": "2026-08-26",
+      "topic_key": "图文操作手册",
+      "title": "AI 通知 · 力企云 SAAS 图文操作手册 v1.0",
+      "doc_url": "http://120.79.142.141/liqi-attachments/docs/liqi-manual.html",
+      "doc_url_history": [],
+      "extra_urls": {
+        "docx": "http://120.79.142.141/liqi-attachments/media/liqi-manual.docx"
+      },
+      "groups": [
+        "通用通知群(§3 webhook)",
+        "发布通知群(加签)"
+      ],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "用 skill webapp-manual-gen 重新生成:15功能点/16真实截图(GPU 5180采集),产物 docs/操作手册-图文/,含DOCX+自包含HTML;系统入口8000复测200"
+    },
+    {
+      "date": "2026-08-28",
+      "topic_key": "token-cost-折价统计",
+      "title": "AI 通知 · 智远力企-saas 会话Token折价",
+      "doc_url": "http://120.79.142.141/liqi-attachments/reports/token-cost-report.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "本项目.claude会话按Opus4.8官方API标准价折算合计≈$949.42;通用通知群webhook推送"
+    },
+    {
+      "date": "2026-08-31",
+      "topic_key": "local-deploy-package-delivery",
+      "title": "AI 通知 · 智远力企SaaS 本地部署交付包",
+      "doc_url": "http://120.79.142.141/liqi-attachments/docs/liqi-local-deploy.html",
+      "doc_url_history": [],
+      "dingtalk_response": {
+        "errcode": 0,
+        "errmsg": "ok"
+      },
+      "status": "pending",
+      "note": "全栈项目包(前后端源码+ruoyi-vue-pro整库快照78表+本地重建指南)传106,下载链接与Codex部署指引全放交付网页;发布通知群加签webhook推送"
+    }
+  ]
+}
