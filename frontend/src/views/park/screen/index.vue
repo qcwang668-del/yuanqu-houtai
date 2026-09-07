@@ -126,7 +126,7 @@ onMounted(() => {
   function go(_k: string) { toast('该模块请在完整系统中查看（当前为园区可视化大屏）') }
 
   /* ==================== 大屏数据 ==================== */
-  // 企业榜单（企业名取自企业库 stats.topCapital，补贴项数 / 金额按名次派生的拟真口径）
+  // 企业榜单（由企业库 stats.topCapital / topList 填充）
   const DASH_RANK: any[] = []
   // 园区企业动态：暂无数据源（需资质/知产/申报事件表），置空不造假数据
   const DASH_DYN: any[] = []
@@ -167,38 +167,12 @@ onMounted(() => {
      <span>${d[0]}</span><span class="vl mono">${d[1]} 家 · ${((d[1] / sum) * 100).toFixed(1)}%</span></div>`).join('')
   }
 
-  /** 补贴金额格式化（万元）：千分位；≥1000 取整，否则保留 1 位小数 */
-  function fmtWan(v: number) {
-    const n = Number(v) || 0
-    return n >= 1000 ? Math.round(n).toLocaleString('zh-CN')
-      : n.toLocaleString('zh-CN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-  }
-
-  /** 企业名 → 稳定散列（同一企业每次渲染结果一致，避免刷新跳数） */
-  function hashOf(text: string) {
-    let h = 2166136261
-    for (let i = 0; i < text.length; i++) h = ((h ^ text.charCodeAt(i)) * 16777619) >>> 0
-    return h
-  }
-
-  /**
-   * 补贴口径（拟真占位，待接入补贴申报数据源后替换）：
-   * 金额、项数各自按名次给递减基线，再用企业名散列做小幅抖动 —— 二者相互独立，
-   * 金额落在数百万~两千余万元、项数落在 6~27 项，单项均额约 50~120 万元，符合园区实际。
-   */
-  function buildSubsidy(name: string, index: number) {
-    const h = hashOf(name)
-    const amount = Math.max(180, (2380 - index * 265) * (0.88 + (h % 240) / 1000))
-    const count = Math.max(4, 24 - index * 2 + ((h >>> 8) % 7) - 3)
-    return { amount: Math.round(amount * 10) / 10, count }
-  }
-
   function renderRank() {
     let rk: any[], note: string, unit: (r: any) => string
     if (rankMode === 'fund') {
-      rk = DASH_RANK.slice().sort((a, b) => b.c - a.c || b.cnt - a.cnt)
+      rk = DASH_RANK.slice().sort((a, b) => b.c - a.c || parseInt(b.a) - parseInt(a.a))
       note = '按企业<b style="color:#ffd28a">累计获批补贴金额</b>降序 · 支持切换本年 / 累计口径'
-      unit = (r) => `${r.cnt} 项 / ${fmtWan(r.c)} 万元`
+      unit = (r) => `${r.c} 项 / ${r.a}`
     } else if (rankMode === 'track') {
       rk = DASH_TRACK_RANK.slice().sort((a, b) => b.c - a.c)
       note = '按<b style="color:#ffd28a">赛道企业数</b>降序 · 可切换赛道获批金额 / 净增数排序'
@@ -375,13 +349,11 @@ onMounted(() => {
         DASH_QUAL.push(['✓', '已回填', Number(stats.enriched) || 0, '数据完整度 ' + (stats.total > 0 ? ((Number(stats.enriched) / stats.total) * 100).toFixed(1) + '%' : '-')])
         DASH_QUAL.push(['○', '查无结果', Number(stats.notFound) || 0, '待核实'])
       }
-      // 补贴排行：企业名取企业库注册资本 Top 10（真实名单），补贴项数 / 金额按名次派生
+      // 榜单：注册资本 Top 10
       if (Array.isArray(stats.topCapital) && stats.topCapital.length) {
         DASH_RANK.length = 0
-        stats.topCapital.slice(0, 8).forEach((t: any, i: number) => {
-          const sd = buildSubsidy(String(t.name || ''), i)
-          DASH_RANK.push({ n: t.name, c: sd.amount, cnt: sd.count, hero: i === 0 })
-        })
+        stats.topCapital.forEach((t: any, i: number) =>
+          DASH_RANK.push({ n: t.name, c: Number(t.value) || 0, a: t.text || '-', hero: i === 0 }))
       }
       initDash(); animateNums(root); animateBars(root)
       setTimeout(fitScreen, 100)
@@ -475,13 +447,13 @@ onUnmounted(() => {
 .pkscreen .rank .r:nth-child(1) .no{background:linear-gradient(135deg,#f3c877,#d0942c);color:#3b2703}
 .pkscreen .rank .r:nth-child(2) .no{background:linear-gradient(135deg,#d6dee9,#9fb0c4);color:#2b3546}
 .pkscreen .rank .r:nth-child(3) .no{background:linear-gradient(135deg,#e0b184,#b1793f);color:#3b2703}
-.pkscreen .rank .r .nm{flex:0 0 110px;color:#d3e4fa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pkscreen .rank .r .nm{flex:0 0 118px;color:#d3e4fa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pkscreen .rank .r .bb{flex:1;height:9px;border-radius:5px;background:rgba(90,150,230,.14);overflow:hidden}
 .pkscreen .rank .r .bb i{display:block;height:100%;border-radius:5px;width:0;transition:width 1.1s cubic-bezier(.25,.9,.3,1);
   background:linear-gradient(90deg,#1f7bd6,#25d0e0)}
 .pkscreen .rank .r.hero .bb i{background:linear-gradient(90deg,#d9a13b,#ffd98f)}
 .pkscreen .rank .r.hero .nm{color:#ffd98f;font-weight:600}
-.pkscreen .rank .r .vv{flex:0 0 124px;text-align:right;color:#ffd28a;font-size:12px;white-space:nowrap}
+.pkscreen .rank .r .vv{flex:0 0 86px;text-align:right;color:#ffd28a;font-size:12px}
 .pkscreen .roll{max-height:138px;overflow:hidden;position:relative}
 .pkscreen .roll .rl{display:grid;gap:6px}
 .pkscreen .roll .rl .it{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;color:#b7d2ef;
