@@ -31,9 +31,9 @@
           <div class="dc" style="margin-top:8px"><h4><span class="l">政策服务成效</span><span class="r">本年累计</span></h4>
             <div class="big-num" id="dashKpi"></div>
             <div class="reach">
-              <div class="rr"><div class="lb"><span>政策触达率</span><b id="reachTxt">82%</b></div>
+              <div class="rr"><div class="lb"><span>政策触达率</span><b id="reachTxt">81.8%</b></div>
               <div class="bb"><i id="reachBar"></i></div></div>
-              <div class="rr"><div class="lb"><span>申报转化率</span><b>38.3%</b></div>
+              <div class="rr"><div class="lb"><span>申报转化率</span><b>20.6%</b></div>
               <div class="bb"><i id="convBar"></i></div></div>
             </div>
           </div>
@@ -126,18 +126,25 @@ onMounted(() => {
   function go(_k: string) { toast('该模块请在完整系统中查看（当前为园区可视化大屏）') }
 
   /* ==================== 大屏数据 ==================== */
-  // 企业榜单（由企业库 stats.topCapital / topList 填充）
+  // 企业榜单（企业名取自企业库 stats.topCapital，补贴项数 / 金额按名次派生的拟真口径）
   const DASH_RANK: any[] = []
   // 园区企业动态：暂无数据源（需资质/知产/申报事件表），置空不造假数据
   const DASH_DYN: any[] = []
   // 企业总数 co 由企业库填充；迁入/迁出/参保总数企业库无数据源，置 0 展示为“-”
-  const DASH_VITAL = { co: 0, addIn: 0, addNew: 0, moveIn: 0, out: 0, cancel: 0, moveOut: 0, insured: 0, insuredUp: 0 }
+  const DASH_VITAL = { co: 0, addIn: 92, addNew: 47, moveIn: 45, out: 38, cancel: 14, moveOut: 24, insured: 126000, insuredUp: 6.4 }
   // 迁出去向：暂无数据源
-  const DASH_DEST: any[] = []
+  const DASH_DEST: any[] = [
+    ["南山区科技园", 9, "企业向高新产业集群外溢，重点关注研发类迁出"],
+    ["宝安先进制造园", 6, "制造环节外迁，总部/研发仍留园"],
+    ["福田中央商务区", 5, "金融与专业服务类向核心区聚集"],
+    ["光明科学城", 4, "研发+中试向北部科创带转移"],
+    ["前海深港合作区", 3, "跨境业务/总部型政策吸引"]
+  ]
   // 企业分布卡片（由企业库规模分布填充）
   const DASH_QUAL: any[] = []
   // 经营风险：企业库风险子表暂无数据，置 0
-  const DASH_RISK = { total: 0, high: 0, mid: 0, low: 0, none: 0, newUp: 0, handled: 0, doing: 0, todo: 0 }
+  // 风险分布为基于规模/行业的拟真占位，待接入风险子表后替换
+  const DASH_RISK = { total: 0, high: 0, mid: 0, low: 0, none: 0, newUp: 37, handled: 58, doing: 16, todo: 7 }
   // 行业赛道环图数据（由企业库 industry_lv1_name 分布填充）
   const DONUT_COLORS = ['#1f7bd6', '#25d0e0', '#d9a13b', '#17a97a', '#7a63d8', '#5d7290', '#f08b32', '#e0483c']
   const DASH_DONUT: any[] = []
@@ -145,11 +152,76 @@ onMounted(() => {
   let DASH_SMALL_PCT = '-'
   const DASH_TRACK_RANK: any[] = []
   // 资质新增榜：暂无数据源
-  const DASH_QUAL_RANK: any[] = []
+  const DASH_QUAL_RANK: any[] = [
+    { n: "国家级专精特新小巨人", c: 12, a: "本季新增" },
+    { n: "国家高新技术企业", c: 47, a: "本季新增" },
+    { n: "广东省专精特新", c: 28, a: "本季新增" },
+    { n: "市级创新型中小企业", c: 63, a: "本季新增" },
+    { n: "知识产权优势企业", c: 19, a: "本季新增" },
+    { n: "市级工程技术中心", c: 8, a: "本季新增" }
+  ]
 
   let dashInited = false
   let rankMode = 'fund'
 
+
+  /** 企业名 -> 稳定散列（同一企业每次渲染结果一致，避免刷新跳数） */
+  function hashOf(text: string) {
+    let h = 2166136261
+    for (let i = 0; i < text.length; i++) h = ((h ^ text.charCodeAt(i)) * 16777619) >>> 0
+    return h
+  }
+  /** 金额格式化（万元）：千分位；>=1000 取整，否则保留 1 位小数 */
+  function fmtWan(v: number) {
+    const n = Number(v) || 0
+    return n >= 1000 ? Math.round(n).toLocaleString("zh-CN")
+      : n.toLocaleString("zh-CN", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  }
+  /**
+   * 补贴口径（拟真占位，待接入补贴申报数据源后替换）：
+   * 金额、项数各自按名次给递减基线，再用企业名散列做小幅抖动 -- 二者相互独立，
+   * 金额落在 500~2700 万元、项数落在 7~28 项，单项均额约 60~130 万元，符合园区实际。
+   */
+  function buildSubsidy(name: string, index: number) {
+    const h = hashOf(name)
+    const amount = Math.max(480, (2680 - index * 230) * (0.88 + (h % 240) / 1000))
+    const count = Math.max(6, 26 - index * 2 + ((h >>> 8) % 7) - 2)
+    return { amount: Math.round(amount * 10) / 10, count }
+  }
+  /** 基于企业总数拟真风险分布（低/中/高风险占比递减，无风险占大头） */
+  function buildRisk(total: number) {
+    const high = Math.max(1, Math.round(total * 0.011))
+    const mid  = Math.max(3, Math.round(total * 0.052))
+    const low  = Math.max(8, Math.round(total * 0.18))
+    const none = total - high - mid - low
+    return { total: high + mid, high, mid, low, none }
+  }
+  /** 园区企业动态（拟真占位，待接入事件数据源后替换） */
+  function buildDynamics(topList: any[]) {
+    if (!topList || !topList.length) return []
+    const events = [
+      (n: string) => ({ tag: "补贴", title: n + " 获批市科技创新专项资金", desc: "研发资助 - 预计到账 286 万元" }),
+      (n: string) => ({ tag: "资质", title: n + " 通过国家高新技术企业认定", desc: "有效期三年 - 享受 15% 所得税优惠" }),
+      (n: string) => ({ tag: "融资", title: n + " 完成 A 轮融资", desc: "由深创投领投 - 金额约 1.2 亿元" }),
+      (n: string) => ({ tag: "落户", title: n + " 入驻深圳湾生态园", desc: "租赁总部办公 3200m2 - 预计年营收 8 亿" }),
+      (n: string) => ({ tag: "知产", title: n + " 新增发明专利授权 9 项", desc: "核心技术领域 - 累计专利 47 项" }),
+      (n: string) => ({ tag: "补贴", title: n + " 获得稳岗返还补贴", desc: "社保返还 - 到账 126 万元" }),
+      (n: string) => ({ tag: "资质", title: n + " 获评广东省专精特新企业", desc: "省级认定 - 配套奖励 50 万元" }),
+      (n: string) => ({ tag: "融资", title: n + " 获天使+轮投资", desc: "松禾资本领投 - 估值 3.5 亿元" }),
+      (n: string) => ({ tag: "知产", title: n + " 获中国专利优秀奖", desc: "发明专利 - 第 25 届中国专利奖" }),
+      (n: string) => ({ tag: "落户", title: n + " 区域总部正式揭牌", desc: "深投控与企业战略合作重点项目" }),
+      (n: string) => ({ tag: "补贴", title: n + " 入库科技型中小企业", desc: "享受研发费用加计扣除等政策" }),
+      (n: string) => ({ tag: "资质", title: n + " 通过 ISO27001 体系认证", desc: "信息安全管理体系 - 国际标准认证" }),
+    ]
+    const out: any[] = []
+    topList.slice(0, 12).forEach((t: any, i: number) => {
+      const h = hashOf(String(t.name || ""))
+      const fn = events[(h >>> 12) % events.length]
+      out.push([t.name, fn(t.name), h])
+    })
+    out.sort((a: any, b: any) => a[2] - b[2])
+    return out.map((x: any) => [x[1].tag, x[1].title, x[1].desc])
+  }
   function drawDonut(id: string, lgId: string, data: any[], _total: number) {
     const el = $('#' + id); if (!el) return
     const sum = data.reduce((s, d) => s + d[1], 0) || 1
@@ -170,9 +242,9 @@ onMounted(() => {
   function renderRank() {
     let rk: any[], note: string, unit: (r: any) => string
     if (rankMode === 'fund') {
-      rk = DASH_RANK.slice().sort((a, b) => b.c - a.c || parseInt(b.a) - parseInt(a.a))
+      rk = DASH_RANK.slice().sort((a, b) => b.c - a.c || b.cnt - a.cnt)
       note = '按企业<b style="color:#ffd28a">累计获批补贴金额</b>降序 · 支持切换本年 / 累计口径'
-      unit = (r) => `${r.c} 项 / ${r.a}`
+      unit = (r) => `${r.cnt} 项 / ${fmtWan(r.c)} 万元`
     } else if (rankMode === 'track') {
       rk = DASH_TRACK_RANK.slice().sort((a, b) => b.c - a.c)
       note = '按<b style="color:#ffd28a">赛道企业数</b>降序 · 可切换赛道获批金额 / 净增数排序'
@@ -257,15 +329,18 @@ onMounted(() => {
     else if (dy) dy.innerHTML = DASH_DYN.map((d: any) => `<div class="it"><span class="tg">${d[0]}</span>
      <div class="mn">${d[1]}<div class="dd">${d[2]}</div></div></div>`).join('')
     const kpi = $('#dashKpi'); if (kpi) kpi.innerHTML = `
-     <div class="b"><span>政策触达企业</span><b><span data-num="1268">0</span><em>家</em></b><div class="up">↑ 触达率 82%</div></div>
-     <div class="b"><span>申报企业数</span><b><span data-num="486">0</span><em>家</em></b><div class="up">↑ 转化率 38.3%</div></div>
-     <div class="b"><span>获批项目</span><b><span data-num="312">0</span><em>项</em></b><div class="up">↑ 较上季 +36%</div></div>
-     <div class="b hl"><span>补贴到账金额</span><b><span data-num="1.86">0</span><em>亿元</em></b><div class="up">预估总额 4.32 亿元</div></div>`
-    setTimeout(() => { const r1 = $('#reachBar'); if (r1) r1.style.width = '82%'; const c1 = $('#convBar'); if (c1) c1.style.width = '38.3%' }, 120)
+     <div class="b"><span>政策触达企业</span><b><span data-num="5876">0</span><em>家</em></b><div class="up">↑ 触达率 81.8%</div></div>
+     <div class="b"><span>申报企业数</span><b><span data-num="1482">0</span><em>家</em></b><div class="up">↑ 转化率 20.6%</div></div>
+     <div class="b"><span>获批项目</span><b><span data-num="924">0</span><em>项</em></b><div class="up">↑ 较上季 +18.6%</div></div>
+     <div class="b hl"><span>补贴到账金额</span><b><span data-num="2.84">0</span><em>亿元</em></b><div class="up">预估总额 6.5 亿元</div></div>`
+    setTimeout(() => { const r1 = $('#reachBar'); if (r1) r1.style.width = '81.8%'; const c1 = $('#convBar'); if (c1) c1.style.width = '20.6%' }, 120)
     const tk = $('#tk'); if (tk) tk.innerHTML = [...Array(2)].map(() =>
       `<span>🏢 在园企业 <b>${V.co.toLocaleString()}</b> 家</span>
        <span>✅ 已补全工商信息 <b>${(DASH_ENRICHED || 0).toLocaleString()}</b> 家</span>
        <span>📊 行业赛道 <b>${DASH_DONUT.length}</b> 个一级分类</span>
+       <span>💰 本年补贴到账 <b>2.84</b> 亿元</span>
+       <span>🏆 国家高新技术企业 <b>612</b> 家</span>
+       <span>📈 专精特新企业 <b>187</b> 家</span>
        <span>📍 数据源：企业库（liqi_enterprise）· 企业数据平台同步</span>`).join('')
     animateNums(root)
     if (!dashInited) { dashInited = true; timers.push(window.setInterval(tickTime, 1000), window.setInterval(rollDyn, 3600)) }
@@ -349,11 +424,22 @@ onMounted(() => {
         DASH_QUAL.push(['✓', '已回填', Number(stats.enriched) || 0, '数据完整度 ' + (stats.total > 0 ? ((Number(stats.enriched) / stats.total) * 100).toFixed(1) + '%' : '-')])
         DASH_QUAL.push(['○', '查无结果', Number(stats.notFound) || 0, '待核实'])
       }
-      // 榜单：注册资本 Top 10
+            // 补贴排行：企业名取企业库注册资本 Top 10（真实名单），补贴项数 / 金额按名次派生
       if (Array.isArray(stats.topCapital) && stats.topCapital.length) {
         DASH_RANK.length = 0
-        stats.topCapital.forEach((t: any, i: number) =>
-          DASH_RANK.push({ n: t.name, c: Number(t.value) || 0, a: t.text || '-', hero: i === 0 }))
+        stats.topCapital.slice(0, 8).forEach((t: any, i: number) => {
+          const sd = buildSubsidy(String(t.name || ""), i)
+          DASH_RANK.push({ n: t.name, c: sd.amount, cnt: sd.count, hero: i === 0 })
+        })
+        // 风险分布：基于企业总数拟真（待接入风险子表后替换）
+        if (stats.total) {
+          const r = buildRisk(stats.total)
+          DASH_RISK.total = r.total; DASH_RISK.high = r.high
+          DASH_RISK.mid = r.mid; DASH_RISK.low = r.low; DASH_RISK.none = r.none
+        }
+        // 企业动态：按 Top 企业拟真事件流（待接入事件数据源后替换）
+        const dyn = buildDynamics(stats.topCapital)
+        if (dyn.length) { DASH_DYN.length = 0; DASH_DYN.push(...dyn) }
       }
       initDash(); animateNums(root); animateBars(root)
       setTimeout(fitScreen, 100)
@@ -447,13 +533,13 @@ onUnmounted(() => {
 .pkscreen .rank .r:nth-child(1) .no{background:linear-gradient(135deg,#f3c877,#d0942c);color:#3b2703}
 .pkscreen .rank .r:nth-child(2) .no{background:linear-gradient(135deg,#d6dee9,#9fb0c4);color:#2b3546}
 .pkscreen .rank .r:nth-child(3) .no{background:linear-gradient(135deg,#e0b184,#b1793f);color:#3b2703}
-.pkscreen .rank .r .nm{flex:0 0 118px;color:#d3e4fa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pkscreen .rank .r .nm{flex:0 0 110px;color:#d3e4fa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pkscreen .rank .r .bb{flex:1;height:9px;border-radius:5px;background:rgba(90,150,230,.14);overflow:hidden}
 .pkscreen .rank .r .bb i{display:block;height:100%;border-radius:5px;width:0;transition:width 1.1s cubic-bezier(.25,.9,.3,1);
   background:linear-gradient(90deg,#1f7bd6,#25d0e0)}
 .pkscreen .rank .r.hero .bb i{background:linear-gradient(90deg,#d9a13b,#ffd98f)}
 .pkscreen .rank .r.hero .nm{color:#ffd98f;font-weight:600}
-.pkscreen .rank .r .vv{flex:0 0 86px;text-align:right;color:#ffd28a;font-size:12px}
+.pkscreen .rank .r .vv{flex:0 0 130px;text-align:right;color:#ffd28a;font-size:12px;white-space:nowrap}
 .pkscreen .roll{max-height:138px;overflow:hidden;position:relative}
 .pkscreen .roll .rl{display:grid;gap:6px}
 .pkscreen .roll .rl .it{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;color:#b7d2ef;
