@@ -20,6 +20,17 @@ public interface LiqiEnterpriseService {
     Map<String, Object> getEnterpriseDetail(Long id);
 
     /**
+     * 按企业名称查企业详情。
+     *
+     * <p>会员/会员线索/获批动态等业务表与企业库无外键关联，其行编号并非企业库编号，
+     * 只能按企业名称回查企业库，否则会取到 id 相同的另一家企业（详情与融资数据错乱）。</p>
+     *
+     * @param enterpriseName 企业名称（工商全称）
+     * @return 与 {@link #getEnterpriseDetail(Long)} 同结构；企业库无此名称时 enterprise 为 null
+     */
+    Map<String, Object> getEnterpriseDetailByName(String enterpriseName);
+
+    /**
      * 按需实时调天眼查回填企业工商信息 + 股东，写入企业库并返回最新详情。
      * 天眼查仅认工商登记全称/统一社会信用代码；虚构名/简称查无结果时 enrichStatus=2。
      */

@@ -10,6 +10,12 @@ export const getEnterpriseDetail = (id: number | string) => {
   return request.get({ url: '/liqi/enterprise/get', params: { id } })
 }
 
+// 按企业名称查企业详情：供会员/会员线索/获批动态等无企业外键的列表使用
+// （这些列表行的 id 是各自业务表主键，直接当企业库 id 会取错企业）
+export const getEnterpriseDetailByName = (enterpriseName: string) => {
+  return request.get({ url: '/liqi/enterprise/get-by-name', params: { enterpriseName } })
+}
+
 // 按需实时调天眼查回填工商信息 + 股东
 export const enrichEnterprise = (id: number | string) => {
   return request.post({ url: '/liqi/enterprise/enrich', params: { id } })

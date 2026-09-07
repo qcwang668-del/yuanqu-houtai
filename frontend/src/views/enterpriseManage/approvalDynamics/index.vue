@@ -140,7 +140,7 @@ import { getApprovalDynamicPage, exportApprovalDynamic } from '@/api/liqi/approv
 import download from '@/utils/download'
 import EnterpriseDrawer from '@/views/park/enterpriseList/EnterpriseDrawer.vue'
 import { detailFromParkEntity, detailFromBackend } from '@/views/park/enterpriseList/enterpriseData'
-import { getEnterpriseDetail } from '@/api/liqi/enterprise'
+import { getEnterpriseDetailByName } from '@/api/liqi/enterprise'
 
 defineOptions({ name: 'EnterpriseApprovalDynamics' })
 
@@ -152,10 +152,11 @@ const entDetail = ref<any>(null)
 const openEntDetail = async (row: any) => {
   entDetail.value = detailFromParkEntity(row)
   entDetailVisible.value = true
-  // 拉企业库真实详情（含股东/联系人等子表）
-  if (row.id) {
+  // 按企业名称回查企业库真实详情（含股东/联系人/融资等子表）
+  // 获批动态表与企业库无外键，row.id 是动态编号而非企业编号，不能直接当企业 id 用
+  if (row.enterpriseName) {
     try {
-      const payload: any = await getEnterpriseDetail(row.id)
+      const payload: any = await getEnterpriseDetailByName(row.enterpriseName)
       if (payload?.enterprise) entDetail.value = detailFromBackend(payload)
     } catch {
       /* 保留列表行构造的详情 */

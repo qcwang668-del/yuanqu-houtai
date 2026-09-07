@@ -120,4 +120,17 @@ public interface LiqiEnterpriseMapper extends BaseMapperX<LiqiEnterpriseDO> {
                 .eqIfPresent(LiqiEnterpriseDO::getEnrichStatus, status));
     }
 
+    /**
+     * 按企业名称精确查询企业。
+     *
+     * <p>会员/会员线索/获批动态等业务表与企业库之间没有外键，只能按企业名称关联；
+     * 同名多条时取 id 最小的一条，保证结果稳定。</p>
+     */
+    default LiqiEnterpriseDO selectByEnterpriseName(String enterpriseName) {
+        return selectOne(new LambdaQueryWrapperX<LiqiEnterpriseDO>()
+                .eq(LiqiEnterpriseDO::getEnterpriseName, enterpriseName)
+                .orderByAsc(LiqiEnterpriseDO::getId)
+                .last("limit 1"));
+    }
+
 }

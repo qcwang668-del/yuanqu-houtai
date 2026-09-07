@@ -69,8 +69,18 @@ public class LiqiEnterpriseServiceImpl implements LiqiEnterpriseService {
 
     @Override
     public Map<String, Object> getEnterpriseDetail(Long id) {
+        return buildDetail(id == null ? null : enterpriseMapper.selectById(id));
+    }
+
+    @Override
+    public Map<String, Object> getEnterpriseDetailByName(String enterpriseName) {
+        return buildDetail(StrUtil.isBlank(enterpriseName) ? null
+                : enterpriseMapper.selectByEnterpriseName(enterpriseName.trim()));
+    }
+
+    /** 组装企业详情：主表 + 各子表；企业不存在时子表统一返回空集合 */
+    private Map<String, Object> buildDetail(LiqiEnterpriseDO ent) {
         Map<String, Object> result = new LinkedHashMap<>();
-        LiqiEnterpriseDO ent = enterpriseMapper.selectById(id);
         result.put("enterprise", ent);
         if (ent == null) {
             result.put("shareholders", new ArrayList<>());
@@ -82,12 +92,13 @@ public class LiqiEnterpriseServiceImpl implements LiqiEnterpriseService {
             return result;
         }
         // 各子表均取库内真实数据，无数据时前端展示空态（不再使用示例/演示数据）
-        result.put("shareholders", shareholderMapper.selectListByEnterpriseId(id));
-        result.put("contacts", contactMapper.selectListByEnterpriseId(id));
-        result.put("ips", ipMapper.selectListByEnterpriseId(id));
-        result.put("risks", riskMapper.selectListByEnterpriseId(id));
-        result.put("projects", projectMapper.selectListByEnterpriseId(id));
-        result.put("financing", financingMapper.selectListByEnterpriseId(id));
+        Long entId = ent.getId();
+        result.put("shareholders", shareholderMapper.selectListByEnterpriseId(entId));
+        result.put("contacts", contactMapper.selectListByEnterpriseId(entId));
+        result.put("ips", ipMapper.selectListByEnterpriseId(entId));
+        result.put("risks", riskMapper.selectListByEnterpriseId(entId));
+        result.put("projects", projectMapper.selectListByEnterpriseId(entId));
+        result.put("financing", financingMapper.selectListByEnterpriseId(entId));
         return result;
     }
 

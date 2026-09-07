@@ -54,6 +54,13 @@ public class LiqiEnterpriseController {
         return success(enterpriseService.getEnterpriseDetail(id));
     }
 
+    @GetMapping("/get-by-name")
+    @Operation(summary = "按企业名称获得企业详情（供会员/线索等无企业外键的列表调用）")
+    @PreAuthorize("@ss.hasPermission('liqi:enterprise:query')")
+    public CommonResult<Map<String, Object>> getDetailByName(@RequestParam("enterpriseName") String enterpriseName) {
+        return success(enterpriseService.getEnterpriseDetailByName(enterpriseName));
+    }
+
     @PostMapping("/enrich")
     @Operation(summary = "按需实时调天眼查回填工商信息 + 股东")
     @PreAuthorize("@ss.hasPermission('liqi:enterprise:query')")
