@@ -186,8 +186,8 @@
               <span v-for="(tg, i) in sec.tags" :key="i" class="rs-tag">{{ tg }}</span>
             </div>
             <!-- 表格 -->
-            <el-table v-else :data="sec.rows" class="rs-table" stripe :empty-text="sec.note || '暂无数据'">
-              <el-table-column v-for="c in sec.columns" :key="c.prop" :prop="c.prop" :label="c.label" :width="c.width" />
+            <el-table v-else :data="sec.rows" class="rs-table" stripe :max-height="sec.maxHeight" :empty-text="sec.note || '暂无数据'">
+              <el-table-column v-for="c in sec.columns" :key="c.prop" :prop="c.prop" :label="c.label" :width="c.width" :show-overflow-tooltip="c.ellipsis" />
             </el-table>
           </div>
         </el-tab-pane>

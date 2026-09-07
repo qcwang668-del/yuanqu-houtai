@@ -35,8 +35,9 @@ export interface DetailSection {
   title: string
   count?: number | string
   type: 'kv' | 'table' | 'tags' | 'stat'
+  maxHeight?: number
   pairs?: { label: string; value: string }[]
-  columns?: { prop: string; label: string; width?: number }[]
+  columns?: { prop: string; label: string; width?: number; ellipsis?: boolean }[]
   rows?: Record<string, any>[]
   tags?: string[]
   stats?: { label: string; value: number | string; unit?: string }[]
@@ -315,12 +316,13 @@ function buildRichTabs(e: any, holders: any[], ips: any[], risks: any[], tags: s
         },
         {
           title: '融资历程', count: financing.length, type: 'table',
+          maxHeight: 240,
           note: financing.length ? '' : '暂无融资数据',
           columns: [
             { prop: 'rzTime', label: '融资时间', width: 120 },
             { prop: 'rzRound', label: '融资轮次', width: 120 },
             { prop: 'rzAmt', label: '融资金额', width: 160 },
-            { prop: 'investors', label: '投资方' }
+            { prop: 'investors', label: '投资方', ellipsis: true }
           ],
           rows: financing
         },
