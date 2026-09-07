@@ -3,8 +3,10 @@ package cn.iocoder.yudao.module.liqi.message.controller.admin;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushCandidateVO;
+import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushFilterVO;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.UserMessagePageReqVO;
 import cn.iocoder.yudao.module.liqi.message.dal.dataobject.LiqiUserMessageDO;
+import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseMapper;
 import cn.iocoder.yudao.module.liqi.message.service.LiqiUserMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
@@ -26,6 +29,8 @@ public class LiqiPushMessageController {
 
     @Resource
     private LiqiUserMessageService userMessageService;
+    @Resource
+    private LiqiEnterpriseMapper enterpriseMapper;
 
     @GetMapping("/page")
     @Operation(summary = "推送记录分页")
@@ -47,6 +52,31 @@ public class LiqiPushMessageController {
     @PreAuthorize("@ss.hasPermission('liqi:push-message:push')")
     public CommonResult<List<ParkPushCandidateVO>> parkCandidates(@RequestParam("policyId") String policyId) {
         return success(userMessageService.candidatesOfParkPolicy(policyId));
+    }
+
+    @PostMapping("/park-candidates-by-filter")
+    @Operation(summary = "园区发布项目：按企业画像圈选客户对象（范围=园区客户管理中的企业）")
+    @PreAuthorize("@ss.hasPermission('liqi:push-message:push')")
+    public CommonResult<List<ParkPushCandidateVO>> parkCandidatesByFilter(
+            @RequestParam("policyId") String policyId,
+            @RequestBody(required = false) ParkPushFilterVO filter) {
+        return success(userMessageService.candidatesOfParkPolicyByFilter(policyId, filter));
+    }
+
+    @PostMapping("/park-candidates-count")
+    @Operation(summary = "园区发布项目：按企业画像统计命中客户数（发布页实时回显）")
+    @PreAuthorize("@ss.hasPermission('liqi:push-message:push')")
+    public CommonResult<Long> parkCandidatesCount(
+            @RequestParam("policyId") String policyId,
+            @RequestBody(required = false) ParkPushFilterVO filter) {
+        return success(userMessageService.countCandidatesByFilter(policyId, filter));
+    }
+
+    @GetMapping("/industry-options")
+    @Operation(summary = "行业级联选项（一级/二级，取自企业库实际数据）")
+    @PreAuthorize("@ss.hasPermission('liqi:push-message:push')")
+    public CommonResult<List<Map<String, Object>>> industryOptions() {
+        return success(enterpriseMapper.selectIndustryLv2Options());
     }
 
     @PostMapping("/park-push")

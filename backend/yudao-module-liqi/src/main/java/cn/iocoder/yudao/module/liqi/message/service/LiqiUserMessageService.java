@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.liqi.message.service;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushCandidateVO;
+import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushFilterVO;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.UserMessagePageReqVO;
 import cn.iocoder.yudao.module.liqi.message.dal.dataobject.LiqiUserMessageDO;
 
@@ -36,6 +37,18 @@ public interface LiqiUserMessageService {
 
     /** 园区运营：把一条园区政策推送给勾选的会员（已推过的跳过）。 */
     int pushParkPolicyToUsers(String policyId, List<Long> userIds);
+
+    /**
+     * 园区发布项目：按企业画像圈选客户对象，返回候选名单。
+     *
+     * <p>圈选范围 = 园区客户管理（liqi_member）中归属本园区的企业；再按 filter 做画像过滤。
+     * 园区客户需已在小程序注册绑定才有 userId 可接收消息，未绑定的企业以
+     * {@code pushable=false} 返回并说明原因，便于运营看到转化缺口。</p>
+     */
+    List<ParkPushCandidateVO> candidatesOfParkPolicyByFilter(String policyId, ParkPushFilterVO filter);
+
+    /** 园区发布项目：按企业画像统计命中的客户数（供发布页实时回显「共 N 家」） */
+    Long countCandidatesByFilter(String policyId, ParkPushFilterVO filter);
 
     /** 管理后台：推送记录分页 */
     PageResult<LiqiUserMessageDO> getAdminPage(UserMessagePageReqVO reqVO);

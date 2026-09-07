@@ -64,6 +64,11 @@ public class LiqiPolicyDO extends TenantBaseDO {
     private String contactPhone;
     /** 可见范围：all 全部 / park 本园区 / region 本地区 */
     private String visibleScope;
+    /** 客户对象模式：all 本园区全部客户 / filter 按企业画像筛选 */
+    private String pushTargetMode;
+    /** 客户对象筛选条件快照（JSON，见 ParkPushFilterVO） */
+    private String pushFilterConditions;
+
     /** 状态：0 已上架 1 已下架（草稿） */
     private Integer status;
 

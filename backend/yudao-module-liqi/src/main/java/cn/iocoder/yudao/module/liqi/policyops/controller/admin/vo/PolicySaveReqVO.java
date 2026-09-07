@@ -65,6 +65,12 @@ public class PolicySaveReqVO {
     @Schema(description = "可见范围：all/park/region")
     private String visibleScope;
 
+    @Schema(description = "客户对象模式：all 本园区全部客户 / filter 按企业画像筛选")
+    private String pushTargetMode;
+
+    @Schema(description = "客户对象筛选条件（JSON 字符串，见 ParkPushFilterVO）")
+    private String pushFilterConditions;
+
     @Schema(description = "状态：0 已上架 1 已下架")
     private Integer status;
 

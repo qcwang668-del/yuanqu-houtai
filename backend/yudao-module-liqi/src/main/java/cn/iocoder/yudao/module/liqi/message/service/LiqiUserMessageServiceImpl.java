@@ -6,8 +6,15 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.module.liqi.dal.dataobject.bind.LiqiUserEnterpriseBindDO;
+import cn.iocoder.yudao.module.liqi.dal.dataobject.enterprise.LiqiEnterpriseDO;
+import cn.iocoder.yudao.module.liqi.dal.dataobject.member.LiqiMemberDO;
+import cn.iocoder.yudao.module.liqi.dal.dataobject.park.LiqiParkDO;
 import cn.iocoder.yudao.module.liqi.dal.mysql.bind.LiqiUserEnterpriseBindMapper;
+import cn.iocoder.yudao.module.liqi.dal.mysql.enterprise.LiqiEnterpriseMapper;
+import cn.iocoder.yudao.module.liqi.dal.mysql.member.LiqiMemberMapper;
+import cn.iocoder.yudao.module.liqi.dal.mysql.park.LiqiParkMapper;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushCandidateVO;
+import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.ParkPushFilterVO;
 import cn.iocoder.yudao.module.liqi.message.controller.admin.vo.UserMessagePageReqVO;
 import cn.iocoder.yudao.module.liqi.message.dal.dataobject.LiqiUserMessageDO;
 import cn.iocoder.yudao.module.liqi.message.dal.mysql.LiqiUserMessageMapper;
@@ -22,7 +29,13 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 力企 - C 端站内消息 Service 实现。
@@ -48,6 +61,12 @@ public class LiqiUserMessageServiceImpl implements LiqiUserMessageService {
     private AppPolicyService appPolicyService;
     @Resource
     private LiqiPolicyService liqiPolicyService;
+    @Resource
+    private LiqiMemberMapper memberMapper;
+    @Resource
+    private LiqiEnterpriseMapper enterpriseMapper;
+    @Resource
+    private LiqiParkMapper parkMapper;
 
     // ---------------- C 端 ----------------
     @Override
@@ -191,6 +210,146 @@ public class LiqiUserMessageServiceImpl implements LiqiUserMessageService {
             });
         }
         return count[0];
+    }
+
+    // ---------------- 园区发布项目：客户对象画像圈选 ----------------
+
+    /**
+     * 圈选范围 = 园区客户管理（liqi_member）中归属本园区的企业。
+     *
+     * <p>会员表无 park_id，沿用园区客户管理列表的口径：按园区地址关键词 LIKE 注册地址。</p>
+     */
+    private List<LiqiMemberDO> parkMembers(Long parkId) {
+        LiqiParkDO park = TenantUtils.executeIgnore(() -> parkMapper.selectById(parkId));
+        if (park == null || StrUtil.isBlank(park.getAddressKeyword())) {
+            return new ArrayList<>();
+        }
+        return TenantUtils.executeIgnore(() -> memberMapper.selectList(
+                new LambdaQueryWrapperX<LiqiMemberDO>()
+                        .like(LiqiMemberDO::getRegisterAddress, park.getAddressKeyword())));
+    }
+
+    @Override
+    public List<ParkPushCandidateVO> candidatesOfParkPolicyByFilter(String policyId, ParkPushFilterVO filter) {
+        List<ParkPushCandidateVO> result = new ArrayList<>();
+        LiqiPolicyDO policy = getParkPolicyDO(policyId);
+        if (policy == null || policy.getParkId() == null) {
+            return result;
+        }
+        // ① 圈选范围：园区客户管理中本园区的企业
+        List<LiqiMemberDO> members = parkMembers(policy.getParkId());
+        if (members.isEmpty()) {
+            return result;
+        }
+        Set<String> memberNames = members.stream().map(LiqiMemberDO::getEnterpriseName)
+                .filter(StrUtil::isNotBlank).collect(Collectors.toSet());
+
+        // ② 画像过滤：条件全空时不过滤，直接取范围内全部企业
+        ParkPushFilterVO f = filter == null ? new ParkPushFilterVO() : filter;
+        List<LiqiEnterpriseDO> enterprises = TenantUtils.executeIgnore(
+                () -> enterpriseMapper.selectByPushFilter(f, memberNames));
+        if (enterprises.isEmpty()) {
+            return result;
+        }
+        Map<String, LiqiEnterpriseDO> entByName = new HashMap<>();
+        for (LiqiEnterpriseDO e : enterprises) {
+            entByName.putIfAbsent(e.getEnterpriseName(), e);
+        }
+        // 融资标记（一次查出，避免逐条判定）
+        Set<Long> financedIds = new HashSet<>(TenantUtils.executeIgnore(() -> enterpriseMapper.selectFinancedIds(
+                enterprises.stream().map(LiqiEnterpriseDO::getId).collect(Collectors.toList()))));
+
+        // ③ 关联绑定表取 userId：园区客户需已注册绑定小程序才可推送
+        Map<String, LiqiUserEnterpriseBindDO> bindByName = new HashMap<>();
+        List<LiqiUserEnterpriseBindDO> binds = TenantUtils.executeIgnore(() -> bindMapper.selectList(
+                new LambdaQueryWrapperX<LiqiUserEnterpriseBindDO>()
+                        .in(LiqiUserEnterpriseBindDO::getEnterpriseName, entByName.keySet())));
+        for (LiqiUserEnterpriseBindDO b : binds) {
+            bindByName.putIfAbsent(b.getEnterpriseName(), b);
+        }
+
+        PolicyDTO policyDto = liqiPolicyService.getParkPolicyDto(policyId);
+        for (LiqiMemberDO m : members) {
+            LiqiEnterpriseDO ent = entByName.get(m.getEnterpriseName());
+            if (ent == null) {
+                continue; // 未命中画像条件
+            }
+            ParkPushCandidateVO vo = new ParkPushCandidateVO();
+            vo.setEnterpriseName(m.getEnterpriseName());
+            vo.setLegalPerson(StrUtil.blankToDefault(m.getLegalPerson(), ent.getLegalPerson()));
+            vo.setIndustry(ent.getIndustry());
+            vo.setParkName(policy.getParkName());
+            // 企业画像字段（供运营核对圈选结果）
+            vo.setInsuredCount(ent.getInsuredCount());
+            vo.setFinanced(financedIds.contains(ent.getId()));
+            vo.setEstablishDate(ent.getEstablishDate());
+            vo.setIndustryLv1Name(ent.getIndustryLv1Name());
+            vo.setIndustryLv2Name(ent.getIndustryLv2Name());
+            vo.setActualCapital(ent.getRegCapitalAmount());
+
+            LiqiUserEnterpriseBindDO bind = bindByName.get(m.getEnterpriseName());
+            if (bind == null) {
+                // 园区客户尚未在小程序注册绑定，没有可接收消息的 userId
+                vo.setPushable(false);
+                vo.setUnpushableReason("该客户尚未在小程序注册绑定，暂无法接收推送");
+                vo.setMatched(false);
+                vo.setPushed(false);
+                vo.setReasons(new ArrayList<>());
+                vo.setRegion(extractRegionFromAddress(m.getRegisterAddress()));
+                result.add(vo);
+                continue;
+            }
+            vo.setPushable(true);
+            vo.setUserId(bind.getUserId());
+            vo.setRegion(StrUtil.blankToDefault(bind.getSnapshotRegion(),
+                    extractRegionFromAddress(m.getRegisterAddress())));
+            TenantUtils.execute(bind.getTenantId(), () -> {
+                boolean matched = liqiPolicyService.matchParkPolicies(toSnapshot(bind)).stream()
+                        .anyMatch(p -> policyId.equals(p.getId()));
+                vo.setMatched(matched);
+                vo.setReasons(buildReasons(policyDto, bind));
+                vo.setPushed(messageMapper.existsByUserAndPolicy(bind.getUserId(), policyId, 1, SOURCE_PARK));
+            });
+            result.add(vo);
+        }
+        // 可推送优先，其次画像匹配优先
+        result.sort((a, b) -> {
+            int p = Boolean.compare(Boolean.TRUE.equals(b.getPushable()), Boolean.TRUE.equals(a.getPushable()));
+            return p != 0 ? p
+                    : Boolean.compare(Boolean.TRUE.equals(b.getMatched()), Boolean.TRUE.equals(a.getMatched()));
+        });
+        return result;
+    }
+
+    @Override
+    public Long countCandidatesByFilter(String policyId, ParkPushFilterVO filter) {
+        LiqiPolicyDO policy = getParkPolicyDO(policyId);
+        if (policy == null || policy.getParkId() == null) {
+            return 0L;
+        }
+        List<LiqiMemberDO> members = parkMembers(policy.getParkId());
+        if (members.isEmpty()) {
+            return 0L;
+        }
+        Set<String> memberNames = members.stream().map(LiqiMemberDO::getEnterpriseName)
+                .filter(StrUtil::isNotBlank).collect(Collectors.toSet());
+        ParkPushFilterVO f = filter == null ? new ParkPushFilterVO() : filter;
+        List<LiqiEnterpriseDO> hit = TenantUtils.executeIgnore(
+                () -> enterpriseMapper.selectByPushFilter(f, memberNames));
+        return (long) hit.size();
+    }
+
+    /** 从注册地址粗提地区（市/区），与绑定表快照口径保持一致 */
+    private static String extractRegionFromAddress(String address) {
+        if (StrUtil.isBlank(address)) {
+            return null;
+        }
+        int qu = address.indexOf("区");
+        if (qu > 0) {
+            int shi = address.indexOf("市");
+            return shi > 0 && shi < qu ? address.substring(shi + 1, qu + 1) : address.substring(0, qu + 1);
+        }
+        return null;
     }
 
     // ---------------- 内部方法 ----------------

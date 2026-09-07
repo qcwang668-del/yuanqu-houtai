@@ -142,6 +142,63 @@
           <el-radio label="region">仅本地区</el-radio>
         </el-radio-group>
       </el-form-item>
+      <el-form-item label="客户对象">
+        <el-radio-group v-model="form.pushTargetMode">
+          <el-radio label="all">本园区全部客户企业</el-radio>
+          <el-radio label="filter">按企业画像筛选</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <template v-if="form.pushTargetMode === 'filter'">
+        <el-form-item label="参保人数">
+          <el-input-number v-model="pushFilter.insuredCountMin" :min="0" :max="999999" :controls="false"
+            placeholder="下限" class="!w-120px" />
+          <span class="mx-8px" style="color:#909399">-</span>
+          <el-input-number v-model="pushFilter.insuredCountMax" :min="0" :max="999999" :controls="false"
+            placeholder="上限" class="!w-120px" />
+          <span class="ml-8px text-13px" style="color:#909399">人</span>
+        </el-form-item>
+        <el-form-item label="是否有融资">
+          <el-radio-group v-model="pushFilter.financed">
+            <el-radio :label="undefined">不限</el-radio>
+            <el-radio :label="true">有融资</el-radio>
+            <el-radio :label="false">无融资</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="成立日期">
+          <el-date-picker v-model="establishRange" type="daterange" value-format="YYYY-MM-DD"
+            start-placeholder="起始日期" end-placeholder="截止日期" class="!w-320px" />
+        </el-form-item>
+        <el-form-item label="所属行业">
+          <el-cascader v-model="industrySelected" :options="industryOptions"
+            :props="{ multiple: true, checkStrictly: true, emitPath: true }"
+            placeholder="选择一级 / 二级行业（可多选）" clearable filterable
+            collapse-tags collapse-tags-tooltip class="!w-full" />
+        </el-form-item>
+        <el-form-item label="实缴资本">
+          <el-input-number v-model="pushFilter.actualCapitalMin" :min="0" :controls="false"
+            placeholder="下限" class="!w-120px" />
+          <span class="mx-8px" style="color:#909399">-</span>
+          <el-input-number v-model="pushFilter.actualCapitalMax" :min="0" :controls="false"
+            placeholder="上限" class="!w-120px" />
+          <span class="ml-8px text-13px" style="color:#909399">万元</span>
+          <el-tooltip placement="top" content="数据取自工商登记注册资本金额（reg_capital_amount）">
+            <Icon icon="ep:question-filled" class="ml-4px" style="color:#c0c4cc" />
+          </el-tooltip>
+        </el-form-item>
+        <el-form-item label="圈选结果">
+          <el-tag v-if="form.id" :type="filterCount > 0 ? 'success' : 'info'" size="large">
+            共 {{ filterCount }} 家客户企业
+          </el-tag>
+          <el-tag v-else type="info" size="large">保存后可预览圈选结果</el-tag>
+          <el-button v-if="form.id" link type="primary" class="ml-10px"
+            :loading="filterCounting" @click="previewFilterList">
+            预览名单
+          </el-button>
+          <div class="mt-4px text-12px" style="color:#909399;line-height:1.6">
+            圈选范围为园区客户管理中归属本园区的企业；行业条件仅对已完成工商补全的企业生效。
+          </div>
+        </el-form-item>
+      </template>
       <el-form-item label="状态">
         <el-radio-group v-model="form.status">
           <el-radio :label="0">立即上架</el-radio>
@@ -158,28 +215,58 @@
   <!-- 推送企业对话框（园区运营筛选本园区符合企业并勾选推送） -->
   <Dialog v-model="pushDialog.visible" :title="pushDialog.title" width="860px">
     <div class="mb-10px text-13px" style="color:#606266;line-height:1.6">
-      已筛出本园区「<b style="color:#0066ff">{{ pushDialog.parkName }}</b>」的绑定企业，按画像匹配排序；
+      圈选范围：园区客户管理中「<b style="color:#0066ff">{{ pushDialog.parkName }}</b>」的客户企业，
       默认勾选「画像符合且未推送」的企业，可手动调整。
+      <div v-if="pushDialog.filterSummary" class="mt-4px">
+        筛选条件：<span style="color:#0066ff">{{ pushDialog.filterSummary }}</span>
+      </div>
+      <div v-if="pushDialog.unpushableCount > 0" class="mt-4px" style="color:#e6a23c">
+        其中 {{ pushDialog.unpushableCount }} 家客户尚未在小程序注册绑定，暂无法接收推送（已置灰）。
+      </div>
     </div>
     <el-table ref="pushTableRef" v-loading="pushDialog.loading" :data="pushDialog.list" :stripe="true"
-      max-height="440" row-key="userId" @selection-change="onPushSelect">
-      <el-table-column type="selection" width="48" align="center" :selectable="(r) => !r.pushed" />
+      max-height="440" row-key="enterpriseName" @selection-change="onPushSelect"
+      :row-class-name="(o) => (o.row.pushable === false ? 'row-unpushable' : '')">
+      <el-table-column type="selection" width="48" align="center"
+        :selectable="(r) => r.pushable !== false && !r.pushed" />
       <el-table-column label="企业名称" prop="enterpriseName" min-width="190" show-overflow-tooltip />
-      <el-table-column label="法人" prop="legalPerson" width="80" align="center" />
-      <el-table-column label="行业" prop="industry" width="100" align="center" show-overflow-tooltip />
-      <el-table-column label="地区" prop="region" width="110" align="center" show-overflow-tooltip />
+      <el-table-column label="法人" prop="legalPerson" width="80" align="center" show-overflow-tooltip />
+      <el-table-column label="参保人数" prop="insuredCount" width="90" align="center">
+        <template #default="s">{{ s.row.insuredCount ?? '—' }}</template>
+      </el-table-column>
+      <el-table-column label="融资" width="70" align="center">
+        <template #default="s">
+          <el-tag v-if="s.row.financed" type="success" size="small">有</el-tag>
+          <span v-else style="color:#c0c4cc">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="实缴资本" width="105" align="center">
+        <template #default="s">
+          {{ s.row.actualCapital != null ? Number(s.row.actualCapital).toLocaleString() + ' 万' : '—' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="成立日期" prop="establishDate" width="105" align="center">
+        <template #default="s">{{ s.row.establishDate || '—' }}</template>
+      </el-table-column>
+      <el-table-column label="行业" width="110" align="center" show-overflow-tooltip>
+        <template #default="s">{{ s.row.industryLv2Name || s.row.industry || '—' }}</template>
+      </el-table-column>
       <el-table-column label="画像" width="70" align="center">
         <template #default="s">
           <el-tag v-if="s.row.matched" type="success" size="small">符合</el-tag>
           <el-tag v-else type="info" size="small">—</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="76" align="center">
+      <el-table-column label="状态" width="96" align="center">
         <template #default="s">
-          <el-tag v-if="s.row.pushed" type="warning" size="small">已推</el-tag>
+          <el-tooltip v-if="s.row.pushable === false" :content="s.row.unpushableReason" placement="top">
+            <el-tag type="info" size="small">未注册</el-tag>
+          </el-tooltip>
+          <el-tag v-else-if="s.row.pushed" type="warning" size="small">已推</el-tag>
+          <el-tag v-else type="success" size="small" effect="plain">可推送</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="匹配理由" min-width="170">
+      <el-table-column label="匹配理由" min-width="150">
         <template #default="s">
           <span style="color:#909399;font-size:12px">{{ (s.row.reasons || []).join('；') || '—' }}</span>
         </template>
@@ -196,7 +283,13 @@
 
 <script setup lang="ts">
 import { getPolicyPage, createPolicy, updatePolicy, deletePolicy, updatePolicyStatus, getPolicy } from '@/api/liqi/policyOps'
-import { getParkCandidates, pushParkPolicy } from '@/api/liqi/pushMessage'
+import {
+  getParkCandidates,
+  pushParkPolicy,
+  getParkCandidatesByFilter,
+  getParkCandidatesCount,
+  getIndustryOptions
+} from '@/api/liqi/pushMessage'
 
 defineOptions({ name: 'LiqiPolicyPublish' })
 
@@ -213,6 +306,110 @@ const dialog = reactive({ visible: false, title: '' })
 const formRef = ref()
 const form = reactive<any>({})
 const rules = { title: [{ required: true, message: '请输入政策标题', trigger: 'blur' }] }
+
+// ---- 客户对象：企业画像圈选 ----
+const emptyFilter = () => ({
+  insuredCountMin: undefined,
+  insuredCountMax: undefined,
+  financed: undefined,
+  establishDateStart: undefined,
+  establishDateEnd: undefined,
+  industryLv1Names: undefined,
+  industryLv2Names: undefined,
+  actualCapitalMin: undefined,
+  actualCapitalMax: undefined
+})
+const pushFilter = reactive<any>(emptyFilter())
+const establishRange = ref<string[]>([])
+const industrySelected = ref<any[]>([])
+const industryOptions = ref<any[]>([])
+const filterCount = ref(0)
+const filterCounting = ref(false)
+
+/** 行业级联选项：从企业库实际数据分组去重 */
+const loadIndustryOptions = async () => {
+  if (industryOptions.value.length) return
+  const rows = (await getIndustryOptions()) || []
+  const lv1Map = new Map<string, any>()
+  rows.forEach((r: any) => {
+    const lv1 = r.lv1
+    const lv2 = r.lv2
+    if (!lv1) return
+    if (!lv1Map.has(lv1)) lv1Map.set(lv1, { value: lv1, label: lv1, children: [] })
+    if (lv2) lv1Map.get(lv1).children.push({ value: lv2, label: lv2 })
+  })
+  industryOptions.value = Array.from(lv1Map.values()).map((n: any) => {
+    if (!n.children.length) delete n.children
+    return n
+  })
+}
+
+/** 级联选中值 → pushFilter 的一级/二级行业名 */
+watch(industrySelected, (paths: any[]) => {
+  const lv1: string[] = []
+  const lv2: string[] = []
+  ;(paths || []).forEach((p: any) => {
+    const arr = Array.isArray(p) ? p : [p]
+    if (arr.length === 1) lv1.push(arr[0])
+    else if (arr.length >= 2) lv2.push(arr[arr.length - 1])
+  })
+  pushFilter.industryLv1Names = lv1.length ? lv1.join(',') : undefined
+  pushFilter.industryLv2Names = lv2.length ? lv2.join(',') : undefined
+})
+
+/** 日期区间 → pushFilter */
+watch(establishRange, (v: any) => {
+  pushFilter.establishDateStart = v?.[0] || undefined
+  pushFilter.establishDateEnd = v?.[1] || undefined
+})
+
+/** 条件变化后防抖刷新命中数量 */
+let countTimer: any = null
+const refreshFilterCount = () => {
+  if (!form.id || form.pushTargetMode !== 'filter') return
+  clearTimeout(countTimer)
+  countTimer = setTimeout(async () => {
+    filterCounting.value = true
+    try {
+      filterCount.value = (await getParkCandidatesCount('L' + form.id, { ...pushFilter })) || 0
+    } finally {
+      filterCounting.value = false
+    }
+  }, 400)
+}
+watch(() => ({ ...pushFilter }), refreshFilterCount, { deep: true })
+watch(() => form.pushTargetMode, (mode: string) => {
+  if (mode === 'filter') {
+    loadIndustryOptions()
+    refreshFilterCount()
+  }
+})
+
+/** 把当前筛选条件序列化进表单字段 */
+const syncFilterToForm = () => {
+  form.pushFilterConditions =
+    form.pushTargetMode === 'filter' ? JSON.stringify(pushFilter) : undefined
+}
+
+/** 人类可读的筛选条件摘要 */
+const buildFilterSummary = (f: any) => {
+  if (!f) return ''
+  const parts: string[] = []
+  if (f.insuredCountMin != null || f.insuredCountMax != null) {
+    parts.push(`参保人数 ${f.insuredCountMin ?? '不限'}-${f.insuredCountMax ?? '不限'} 人`)
+  }
+  if (f.financed === true) parts.push('有融资')
+  if (f.financed === false) parts.push('无融资')
+  if (f.establishDateStart || f.establishDateEnd) {
+    parts.push(`成立于 ${f.establishDateStart || '不限'} ~ ${f.establishDateEnd || '不限'}`)
+  }
+  const inds = [f.industryLv1Names, f.industryLv2Names].filter(Boolean).join(',')
+  if (inds) parts.push(inds)
+  if (f.actualCapitalMin != null || f.actualCapitalMax != null) {
+    parts.push(`实缴资本 ${f.actualCapitalMin ?? '不限'}-${f.actualCapitalMax ?? '不限'} 万元`)
+  }
+  return parts.join(' · ')
+}
 
 const getList = async () => {
   loading.value = true
@@ -231,9 +428,37 @@ const openForm = async (id?: number) => {
   Object.keys(form).forEach((k) => delete form[k])
   form.visibleScope = 'all'
   form.status = 0
+  form.pushTargetMode = 'all'
+  // 重置客户对象筛选态
+  Object.assign(pushFilter, emptyFilter())
+  establishRange.value = []
+  industrySelected.value = []
+  filterCount.value = 0
   if (id) {
     const data = await getPolicy(id)
     Object.assign(form, data)
+    form.pushTargetMode = data.pushTargetMode || 'all'
+    // 回填已保存的筛选条件，支持反复调整
+    if (data.pushFilterConditions) {
+      try {
+        const saved = JSON.parse(data.pushFilterConditions)
+        Object.assign(pushFilter, emptyFilter(), saved)
+        establishRange.value =
+          saved.establishDateStart || saved.establishDateEnd
+            ? [saved.establishDateStart, saved.establishDateEnd]
+            : []
+        const paths: any[] = []
+        ;(saved.industryLv1Names || '').split(',').filter(Boolean).forEach((v: string) => paths.push([v]))
+        ;(saved.industryLv2Names || '').split(',').filter(Boolean).forEach((v: string) => paths.push([v]))
+        industrySelected.value = paths
+      } catch (e) {
+        Object.assign(pushFilter, emptyFilter())
+      }
+    }
+    if (form.pushTargetMode === 'filter') {
+      await loadIndustryOptions()
+      refreshFilterCount()
+    }
     dialog.title = '编辑园区政策'
   } else {
     dialog.title = '发布园区政策'
@@ -242,6 +467,7 @@ const openForm = async (id?: number) => {
 }
 const submitForm = async () => {
   await formRef.value?.validate()
+  syncFilterToForm()
   if (form.id) {
     await updatePolicy(form)
     message.success('修改成功')
@@ -251,6 +477,13 @@ const submitForm = async () => {
   }
   dialog.visible = false
   getList()
+}
+
+/** 发布表单内「预览名单」：直接复用推送弹窗展示圈选结果 */
+const previewFilterList = async () => {
+  if (!form.id) return
+  await openPush({ id: form.id, title: form.title, parkName: form.parkName,
+    pushTargetMode: 'filter', pushFilterConditions: JSON.stringify(pushFilter) })
 }
 const toggleStatus = async (row: any) => {
   const next = row.status === 0 ? 1 : 0
@@ -274,6 +507,8 @@ const pushDialog = reactive({
   submitting: false,
   policyId: '',
   parkName: '',
+  filterSummary: '',
+  unpushableCount: 0,
   list: [] as any[],
   checked: [] as any[]
 })
@@ -287,25 +522,46 @@ const openPush = async (row: any) => {
   pushDialog.checked = []
   pushDialog.policyId = policyId
   pushDialog.parkName = row.parkName || '本园区'
+  pushDialog.filterSummary = ''
+  pushDialog.unpushableCount = 0
   try {
-    const data = (await getParkCandidates(policyId)) || []
+    // 按政策配置的客户对象模式分流：filter 走画像圈选，其余沿用原有全量候选
+    const useFilter = row.pushTargetMode === 'filter'
+    let data: any[] = []
+    if (useFilter) {
+      let saved: any = {}
+      try {
+        saved = row.pushFilterConditions ? JSON.parse(row.pushFilterConditions) : {}
+      } catch (e) {
+        saved = {}
+      }
+      pushDialog.filterSummary = buildFilterSummary(saved)
+      data = (await getParkCandidatesByFilter(policyId, saved)) || []
+    } else {
+      data = (await getParkCandidates(policyId)) || []
+    }
     pushDialog.list = data
-    // 默认勾选：画像符合 且 未推送 的企业
+    pushDialog.unpushableCount = data.filter((d: any) => d.pushable === false).length
+    // 默认勾选：可推送 且 画像符合 且 未推送 的企业
     await nextTick()
     data.forEach((item: any) => {
-      if (item.matched && !item.pushed) {
+      if (item.pushable !== false && item.matched && !item.pushed) {
         pushTableRef.value?.toggleRowSelection(item, true)
       }
     })
     if (!data.length) {
-      message.info('本园区暂无绑定企业，企业在 H5 绑定后会自动归属园区')
+      message.info(useFilter
+        ? '没有符合筛选条件的园区客户，可放宽画像条件后重试'
+        : '本园区暂无绑定企业，企业在 H5 绑定后会自动归属园区')
     }
   } finally {
     pushDialog.loading = false
   }
 }
 const submitPush = async () => {
-  const userIds = pushDialog.checked.map((c: any) => c.userId)
+  const userIds = pushDialog.checked
+    .filter((c: any) => c.pushable !== false && c.userId != null)
+    .map((c: any) => c.userId)
   if (!userIds.length) {
     message.warning('请至少勾选一家企业')
     return
@@ -323,3 +579,10 @@ const submitPush = async () => {
 
 getList()
 </script>
+
+<style scoped>
+:deep(.row-unpushable) {
+  color: #c0c4cc;
+  background-color: #fafafa;
+}
+</style>

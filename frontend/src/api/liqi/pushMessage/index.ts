@@ -16,3 +16,17 @@ export const getParkCandidates = (policyId: string) => {
 export const pushParkPolicy = (policyId: string, userIds: (string | number)[]) => {
   return request.post({ url: '/liqi/push-message/park-push?policyId=' + policyId, data: { userIds } })
 }
+
+// ---- 园区发布项目：客户对象企业画像圈选（范围=园区客户管理中的企业）----
+// 按企业画像筛选候选客户名单
+export const getParkCandidatesByFilter = (policyId: string, filter: any) => {
+  return request.post({ url: '/liqi/push-message/park-candidates-by-filter?policyId=' + policyId, data: filter || {} })
+}
+// 按企业画像统计命中客户数（发布页实时回显）
+export const getParkCandidatesCount = (policyId: string, filter: any) => {
+  return request.post({ url: '/liqi/push-message/park-candidates-count?policyId=' + policyId, data: filter || {} })
+}
+// 行业级联选项（一级/二级，取自企业库实际数据）
+export const getIndustryOptions = () => {
+  return request.get({ url: '/liqi/push-message/industry-options' })
+}
