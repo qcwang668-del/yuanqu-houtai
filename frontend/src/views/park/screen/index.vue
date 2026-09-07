@@ -421,8 +421,6 @@ onMounted(() => {
           const pct = all > 0 ? ((Number(x.value) / all) * 100).toFixed(1) + '%' : '-'
           DASH_QUAL.push([scaleIcons[x.name] || '●', x.name + '企业', Number(x.value) || 0, '占比 ' + pct])
         })
-        DASH_QUAL.push(['✓', '已回填', Number(stats.enriched) || 0, '数据完整度 ' + (stats.total > 0 ? ((Number(stats.enriched) / stats.total) * 100).toFixed(1) + '%' : '-')])
-        DASH_QUAL.push(['○', '查无结果', Number(stats.notFound) || 0, '待核实'])
       }
             // 补贴排行：企业名取企业库注册资本 Top 10（真实名单），补贴项数 / 金额按名次派生
       if (Array.isArray(stats.topCapital) && stats.topCapital.length) {
