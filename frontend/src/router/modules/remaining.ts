@@ -59,7 +59,24 @@ const remainingRouter: AppRouteRecordRaw[] = [
   },
   {
     path: '/',
-    redirect: '/park-screen'
+    component: Layout,
+    redirect: '/index',
+    name: 'Home',
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/Home/Index.vue'),
+        name: 'Index',
+        meta: {
+          title: t('router.home'),
+          icon: 'ep:home-filled',
+          noCache: false
+        }
+      }
+    ]
   },
   {
     path: '/user',
