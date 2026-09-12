@@ -94,7 +94,7 @@ let timers: number[] = []
 
 const exitScreen = () => {
   if (window.history.length > 1) router.back()
-  else router.push('/index')
+  else router.push('/')
 }
 
 onMounted(() => {
