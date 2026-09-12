@@ -74,25 +74,6 @@
         </el-card>
       </el-col>
     </el-row>
-
-    <!-- 通知公告 -->
-    <el-row v-if="notices.length" :gutter="16" class="mt-16px">
-      <el-col :span="24">
-        <el-card shadow="never">
-          <template #header>
-            <span>通知公告</span>
-          </template>
-          <div
-            v-for="item in notices"
-            :key="item.id"
-            class="flex items-center justify-between border-0 border-b-1px border-gray-200 border-solid py-10px last:border-b-0"
-          >
-            <span class="text-14px">{{ item.title }}</span>
-            <span class="text-12px text-gray-400">{{ formatTime(item.createTime, 'yyyy-MM-dd') }}</span>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
   </div>
 </template>
 
@@ -167,7 +148,6 @@ const scaleOptions = computed<EChartsOption>(() => ({
   ]
 }))
 
-const notices = ref<{ id: number; title: string; createTime: number }[]>([])
 
 const load = async () => {
   try {
@@ -190,17 +170,7 @@ const load = async () => {
   }
 }
 
-const loadNotices = async () => {
-  try {
-    const data = await request.get({ url: '/system/notice/page', params: { pageNo: 1, pageSize: 5 } })
-    notices.value = (data && data.list) || []
-  } catch {
-    notices.value = []
-  }
-}
-
 onMounted(() => {
   load()
-  loadNotices()
 })
 </script>
