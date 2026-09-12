@@ -1,435 +1,206 @@
 <template>
   <div>
+    <!-- 欢迎条 -->
     <el-card shadow="never">
-      <el-skeleton :loading="loading" animated>
-        <el-row :gutter="16" justify="space-between">
-          <el-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-            <div class="flex items-center">
-              <el-avatar :src="avatar" :size="70" class="mr-16px">
-                <img src="@/assets/imgs/avatar.gif" alt="" />
-              </el-avatar>
-              <div>
-                <div class="text-20px">
-                  {{ t('workplace.welcome') }} {{ username }} {{ t('workplace.happyDay') }}
-                </div>
-                <div class="mt-10px text-14px text-gray-500">
-                  {{ t('workplace.toady') }}，20℃ - 32℃！
-                </div>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-            <div class="h-70px flex items-center justify-end lt-sm:mt-10px">
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.project') }}</div>
-                <CountTo
-                  class="text-20px"
-                  :start-val="0"
-                  :end-val="totalSate.project"
-                  :duration="2600"
-                />
-              </div>
-              <el-divider direction="vertical" />
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.toDo') }}</div>
-                <CountTo
-                  class="text-20px"
-                  :start-val="0"
-                  :end-val="totalSate.todo"
-                  :duration="2600"
-                />
-              </div>
-              <el-divider direction="vertical" border-style="dashed" />
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.access') }}</div>
-                <CountTo
-                  class="text-20px"
-                  :start-val="0"
-                  :end-val="totalSate.access"
-                  :duration="2600"
-                />
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-      </el-skeleton>
+      <div class="flex items-center justify-between lt-sm:flex-col lt-sm:items-start">
+        <div>
+          <div class="text-20px">你好 {{ username }}，祝你开心每一天！</div>
+          <div class="mt-8px text-14px text-gray-500">{{ today }}</div>
+        </div>
+        <div class="flex items-center lt-sm:mt-10px">
+          <div class="px-20px text-center">
+            <div class="mb-8px text-14px text-gray-400">园区企业</div>
+            <div class="text-22px">{{ stats.total.toLocaleString() }}</div>
+          </div>
+          <el-divider direction="vertical" />
+          <div class="px-20px text-center">
+            <div class="mb-8px text-14px text-gray-400">已回填</div>
+            <div class="text-22px">{{ stats.enriched.toLocaleString() }}</div>
+          </div>
+          <el-divider direction="vertical" />
+          <div class="px-20px text-center">
+            <div class="mb-8px text-14px text-gray-400">行业赛道</div>
+            <div class="text-22px">{{ stats.industryCount }}</div>
+          </div>
+        </div>
+      </div>
     </el-card>
-  </div>
 
-  <el-row class="mt-8px" :gutter="8" justify="space-between">
-    <el-col :xl="16" :lg="16" :md="24" :sm="24" :xs="24" class="mb-8px">
-      <el-card shadow="never">
-        <template #header>
-          <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.project') }}</span>
-            <el-link
-              type="primary"
-              :underline="false"
-              href="https://github.com/yudaocode"
-              target="_blank"
-            >
-              {{ t('action.more') }}
-            </el-link>
-          </div>
-        </template>
-        <el-skeleton :loading="loading" animated>
-          <el-row :gutter="8" class="gap-y-8px">
-            <el-col
-              v-for="(item, index) in projects"
-              :key="`card-${index}`"
-              :xl="8"
-              :lg="8"
-              :md="8"
-              :sm="24"
-              :xs="24"
-              class="!flex"
-            >
-              <el-card
-                shadow="hover"
-                class="flex-1 cursor-pointer"
-                body-class="flex h-full flex-col"
-                @click="handleProjectClick(item.message)"
-              >
-                <div class="flex items-center">
-                  <Icon
-                    :icon="item.icon"
-                    :size="25"
-                    class="mr-8px flex-none"
-                    :style="{ color: item.color }"
-                  />
-                  <span class="min-w-0 line-clamp-2 text-16px" :title="item.name">{{
-                    item.name
-                  }}</span>
-                </div>
-                <div
-                  class="mt-12px break-all line-clamp-2 text-12px text-gray-400"
-                  :title="t(item.message)"
-                >
-                  {{ t(item.message) }}
-                </div>
-                <div
-                  class="mt-auto flex items-center justify-between gap-8px pt-12px text-12px text-gray-400"
-                >
-                  <span class="min-w-0 truncate" :title="item.personal">{{ item.personal }}</span>
-                  <span class="shrink-0 whitespace-nowrap">
-                    {{ formatTime(item.time, 'yyyy-MM-dd') }}
-                  </span>
-                </div>
-              </el-card>
-            </el-col>
-          </el-row>
-        </el-skeleton>
-      </el-card>
-
-      <el-card shadow="never" class="mt-8px">
-        <el-skeleton :loading="loading" animated>
-          <el-row :gutter="20" justify="space-between">
-            <el-col :xl="10" :lg="10" :md="24" :sm="24" :xs="24">
-              <el-card shadow="hover" class="mb-8px">
-                <el-skeleton :loading="loading" animated>
-                  <Echart :options="pieOptionsData" :height="280" />
-                </el-skeleton>
-              </el-card>
-            </el-col>
-            <el-col :xl="14" :lg="14" :md="24" :sm="24" :xs="24">
-              <el-card shadow="hover" class="mb-8px">
-                <el-skeleton :loading="loading" animated>
-                  <Echart :options="barOptionsData" :height="280" />
-                </el-skeleton>
-              </el-card>
-            </el-col>
-          </el-row>
-        </el-skeleton>
-      </el-card>
-    </el-col>
-    <el-col :xl="8" :lg="8" :md="24" :sm="24" :xs="24" class="mb-8px">
-      <el-card shadow="never">
-        <template #header>
-          <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.shortcutOperation') }}</span>
-          </div>
-        </template>
-        <el-skeleton :loading="loading" animated>
-          <el-row>
-            <el-col v-for="item in shortcut" :key="`team-${item.name}`" :span="8" class="mb-8px">
-              <div class="flex items-center">
-                <Icon :icon="item.icon" class="mr-8px" :style="{ color: item.color }" />
-                <el-link type="default" :underline="false" @click="handleShortcutClick(item.url)">
-                  {{ item.name }}
-                </el-link>
-              </div>
-            </el-col>
-          </el-row>
-        </el-skeleton>
-      </el-card>
-      <el-card shadow="never" class="mt-8px">
-        <template #header>
-          <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.notice') }}</span>
-            <el-link type="primary" :underline="false">{{ t('action.more') }}</el-link>
-          </div>
-        </template>
-        <el-skeleton :loading="loading" animated>
-          <div v-for="(item, index) in notice" :key="`dynamics-${index}`">
-            <div class="flex items-center">
-              <el-avatar :src="avatar" :size="35" class="mr-16px">
-                <img src="@/assets/imgs/avatar.gif" alt="" />
-              </el-avatar>
-              <div>
-                <div class="text-14px">
-                  <Highlight :keys="item.keys.map((v) => t(v))">
-                    {{ item.type }} : {{ item.title }}
-                  </Highlight>
-                </div>
-                <div class="mt-16px text-12px text-gray-400">
-                  {{ formatTime(item.date, 'yyyy-MM-dd') }}
-                </div>
-              </div>
+    <!-- 图表 + 快捷入口 -->
+    <el-row :gutter="16" class="mt-16px">
+      <el-col :xl="9" :lg="9" :md="24" :sm="24" :xs="24">
+        <el-card shadow="never">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <span>行业赛道分布</span>
+              <span class="text-12px text-gray-400">企业库一级行业 TOP 8</span>
             </div>
-            <el-divider />
+          </template>
+          <el-skeleton :loading="loading" animated>
+            <Echart v-if="industryData.length" :height="320" :options="industryOptions" />
+            <el-empty v-else description="暂无行业数据" :image-size="80" />
+          </el-skeleton>
+        </el-card>
+      </el-col>
+      <el-col :xl="9" :lg="9" :md="24" :sm="24" :xs="24">
+        <el-card shadow="never">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <span>企业规模分布</span>
+              <span class="text-12px text-gray-400">按企业画像规模</span>
+            </div>
+          </template>
+          <el-skeleton :loading="loading" animated>
+            <Echart v-if="scaleData.length" :height="320" :options="scaleOptions" />
+            <el-empty v-else description="暂无规模数据" :image-size="80" />
+          </el-skeleton>
+        </el-card>
+      </el-col>
+      <el-col :xl="6" :lg="6" :md="24" :sm="24" :xs="24">
+        <el-card shadow="never">
+          <template #header>
+            <span>快捷入口</span>
+          </template>
+          <div
+            v-for="item in shortcuts"
+            :key="item.path"
+            class="flex cursor-pointer items-center rounded-6px px-10px py-12px hover:bg-[var(--el-fill-color-light)]"
+            @click="go(item.path)"
+          >
+            <Icon :icon="item.icon" :size="20" :color="item.color" class="mr-10px" />
+            <span class="text-14px">{{ item.name }}</span>
+            <Icon icon="ep:arrow-right" :size="12" class="ml-auto text-gray-400" />
           </div>
-        </el-skeleton>
-      </el-card>
-    </el-col>
-  </el-row>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 通知公告 -->
+    <el-row v-if="notices.length" :gutter="16" class="mt-16px">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <template #header>
+            <span>通知公告</span>
+          </template>
+          <div
+            v-for="item in notices"
+            :key="item.id"
+            class="flex items-center justify-between border-0 border-b-1px border-gray-200 border-solid py-10px last:border-b-0"
+          >
+            <span class="text-14px">{{ item.title }}</span>
+            <span class="text-12px text-gray-400">{{ formatTime(item.createTime, 'yyyy-MM-dd') }}</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
+
 <script lang="ts" setup>
-import { set } from 'lodash-es'
 import { EChartsOption } from 'echarts'
 import { formatTime } from '@/utils'
-
 import { useUserStore } from '@/store/modules/user'
-// import { useWatermark } from '@/hooks/web/useWatermark'
-import type { WorkplaceTotal, Project, Notice, Shortcut } from './types'
-import { pieOptions, barOptions } from './echarts-data'
 import { useRouter } from 'vue-router'
+import request from '@/config/axios'
 
 defineOptions({ name: 'Index' })
 
-const { t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
-// const { setWatermark } = useWatermark()
-const loading = ref(true)
-const avatar = userStore.getUser.avatar
 const username = userStore.getUser.nickname
-const pieOptionsData = reactive<EChartsOption>(pieOptions) as EChartsOption
-// 获取统计数
-let totalSate = reactive<WorkplaceTotal>({
-  project: 0,
-  access: 0,
-  todo: 0
-})
 
-const getCount = async () => {
-  const data = {
-    project: 40,
-    access: 2340,
-    todo: 10
+const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+const now = new Date()
+const today = `${formatTime(now, 'yyyy年MM月dd日')} 星期${weekDays[now.getDay()]}`
+
+const loading = ref(true)
+const stats = reactive({ total: 0, enriched: 0, industryCount: 0 })
+const industryData = ref<{ name: string; value: number }[]>([])
+const scaleData = ref<{ name: string; value: number }[]>([])
+
+const shortcuts = [
+  { name: '园区可视化大屏', path: '/park-screen', icon: 'ep:monitor', color: '#3b82f6' },
+  { name: '园区客户管理', path: '/enterpriseManage/memberMgSys', icon: 'ep:office-building', color: '#22d3ee' },
+  { name: '榜单招商', path: '/investment/rankingList', icon: 'ep:trophy', color: '#fbbf24' },
+  { name: '园区政策发布', path: '/liqi-ops/policy-publish', icon: 'ep:document', color: '#34d399' }
+]
+
+const go = (path: string) => router.push(path)
+
+const COLORS = ['#3b82f6', '#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#f87171', '#94a3b8']
+
+const industryOptions = computed<EChartsOption>(() => ({
+  color: COLORS,
+  tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 家（{d}%）' },
+  legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 12 } },
+  series: [
+    {
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: ['50%', '44%'],
+      itemStyle: { borderRadius: 4, borderWidth: 1 },
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 14, formatter: '{b}\n{c} 家' } },
+      data: industryData.value
+    }
+  ]
+}))
+
+const scaleOptions = computed<EChartsOption>(() => ({
+  color: ['#3b82f6'],
+  tooltip: { trigger: 'axis', formatter: '{b}企业：{c} 家' },
+  grid: { left: 50, right: 20, top: 30, bottom: 30 },
+  xAxis: {
+    type: 'category',
+    data: scaleData.value.map((x) => x.name),
+    axisTick: { show: false }
+  },
+  yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { opacity: 0.3 } } },
+  series: [
+    {
+      type: 'bar',
+      barWidth: 40,
+      itemStyle: { borderRadius: [4, 4, 0, 0] },
+      label: { show: true, position: 'top' },
+      data: scaleData.value.map((x) => x.value)
+    }
+  ]
+}))
+
+const notices = ref<{ id: number; title: string; createTime: number }[]>([])
+
+const load = async () => {
+  try {
+    const data = await request.get({ url: '/liqi/enterprise/stats' })
+    if (data) {
+      stats.total = Number(data.total) || 0
+      stats.enriched = Number(data.enriched) || 0
+      const lv1 = Array.isArray(data.industryLv1) ? data.industryLv1 : []
+      stats.industryCount = lv1.filter((x: any) => x.name).length
+      industryData.value = lv1
+        .filter((x: any) => x.name)
+        .slice(0, 8)
+        .map((x: any) => ({ name: x.name, value: Number(x.value) || 0 }))
+      scaleData.value = (Array.isArray(data.scales) ? data.scales : [])
+        .filter((x: any) => x.name && x.name !== '未知')
+        .map((x: any) => ({ name: x.name, value: Number(x.value) || 0 }))
+    }
+  } finally {
+    loading.value = false
   }
-  totalSate = Object.assign(totalSate, data)
 }
 
-// 获取项目数
-let projects = reactive<Project[]>([])
-const getProject = async () => {
-  const data = [
-    {
-      name: 'ruoyi-vue-pro',
-      icon: 'simple-icons:springboot',
-      message: 'github.com/YunaiV/ruoyi-vue-pro',
-      personal: 'Spring Boot 单体架构',
-      time: new Date('2025-01-02'),
-      color: '#6DB33F'
-    },
-    {
-      name: 'yudao-ui-admin-vue3',
-      icon: 'ep:element-plus',
-      message: 'github.com/yudaocode/yudao-ui-admin-vue3',
-      personal: 'Vue3 + element-plus 管理后台',
-      time: new Date('2025-02-03'),
-      color: '#409EFF'
-    },
-    {
-      name: 'yudao-ui-mall-uniapp',
-      icon: 'icon-park-outline:mall-bag',
-      message: 'github.com/yudaocode/yudao-ui-mall-uniapp',
-      personal: 'Vue3 + uniapp 商城手机端',
-      time: new Date('2025-03-04'),
-      color: '#ff4d4f'
-    },
-    {
-      name: 'yudao-cloud',
-      icon: 'material-symbols:cloud-outline',
-      message: 'github.com/YunaiV/yudao-cloud',
-      personal: 'Spring Cloud 微服务架构',
-      time: new Date('2025-04-05'),
-      color: '#1890ff'
-    },
-    {
-      name: 'yudao-ui-admin-vben',
-      icon: 'devicon:antdesign',
-      message: 'github.com/yudaocode/yudao-ui-admin-vben',
-      personal: 'Vue3 + vben5(antd) 管理后台',
-      time: new Date('2025-05-06'),
-      color: '#e18525'
-    },
-    {
-      name: 'yudao-ui-admin-uniapp',
-      icon: 'ant-design:mobile',
-      message: 'github.com/yudaocode/yudao-ui-admin-uniapp',
-      personal: 'Vue3 + uniapp 管理手机端',
-      time: new Date('2025-06-01'),
-      color: '#2979ff'
-    }
-  ]
-  projects = Object.assign(projects, data)
+const loadNotices = async () => {
+  try {
+    const data = await request.get({ url: '/system/notice/page', params: { pageNo: 1, pageSize: 5 } })
+    notices.value = (data && data.list) || []
+  } catch {
+    notices.value = []
+  }
 }
 
-// 获取通知公告
-let notice = reactive<Notice[]>([])
-const getNotice = async () => {
-  const data = [
-    {
-      title: '系统支持 JDK 8/17/21，Vue 2/3',
-      type: '技术兼容性',
-      keys: ['JDK', 'Vue'],
-      date: new Date()
-    },
-    {
-      title: '后端提供 Spring Boot 2.7/3.2 + Cloud 双架构',
-      type: '架构灵活性',
-      keys: ['Boot', 'Cloud'],
-      date: new Date()
-    },
-    {
-      title: '全部开源，个人与企业可 100% 直接使用，无需授权',
-      type: '开源免授权',
-      keys: ['无需授权'],
-      date: new Date()
-    },
-    {
-      title: '国内使用最广泛的快速开发平台，远超 10w+ 企业使用',
-      type: '广泛企业认可',
-      keys: ['最广泛', '10w+'],
-      date: new Date()
-    }
-  ]
-  notice = Object.assign(notice, data)
-}
-
-// 获取快捷入口
-let shortcut = reactive<Shortcut[]>([])
-
-const getShortcut = async () => {
-  const data = [
-    {
-      name: '首页',
-      icon: 'ion:home-outline',
-      url: '/',
-      color: '#1fdaca'
-    },
-    {
-      name: '商城中心',
-      icon: 'ep:shop',
-      url: '/mall/home',
-      color: '#ff6b6b'
-    },
-    {
-      name: 'AI 大模型',
-      icon: 'tabler:ai',
-      url: '/ai/chat',
-      color: '#7c3aed'
-    },
-    {
-      name: 'ERP 系统',
-      icon: 'simple-icons:erpnext',
-      url: '/erp/home',
-      color: '#3fb27f'
-    },
-    {
-      name: 'CRM 系统',
-      icon: 'simple-icons:civicrm',
-      url: '/crm/backlog',
-      color: '#4daf1bc9'
-    },
-    {
-      name: 'IoT 物联网',
-      icon: 'fa-solid:hdd',
-      url: '/iot/home',
-      color: '#1a73e8'
-    }
-  ]
-  shortcut = Object.assign(shortcut, data)
-}
-
-// 用户来源
-const getUserAccessSource = async () => {
-  const data = [
-    { value: 335, name: 'analysis.directAccess' },
-    { value: 310, name: 'analysis.mailMarketing' },
-    { value: 234, name: 'analysis.allianceAdvertising' },
-    { value: 135, name: 'analysis.videoAdvertising' },
-    { value: 1548, name: 'analysis.searchEngines' }
-  ]
-  set(
-    pieOptionsData,
-    'legend.data',
-    data.map((v) => t(v.name))
-  )
-  pieOptionsData!.series![0].data = data.map((v) => {
-    return {
-      name: t(v.name),
-      value: v.value
-    }
-  })
-}
-const barOptionsData = reactive<EChartsOption>(barOptions) as EChartsOption
-
-// 周活跃量
-const getWeeklyUserActivity = async () => {
-  const data = [
-    { value: 13253, name: 'analysis.monday' },
-    { value: 34235, name: 'analysis.tuesday' },
-    { value: 26321, name: 'analysis.wednesday' },
-    { value: 12340, name: 'analysis.thursday' },
-    { value: 24643, name: 'analysis.friday' },
-    { value: 1322, name: 'analysis.saturday' },
-    { value: 1324, name: 'analysis.sunday' }
-  ]
-  set(
-    barOptionsData,
-    'xAxis.data',
-    data.map((v) => t(v.name))
-  )
-  set(barOptionsData, 'series', [
-    {
-      name: t('analysis.activeQuantity'),
-      data: data.map((v) => v.value),
-      type: 'bar'
-    }
-  ])
-}
-
-const getAllApi = async () => {
-  await Promise.all([
-    getCount(),
-    getProject(),
-    getNotice(),
-    getShortcut(),
-    getUserAccessSource(),
-    getWeeklyUserActivity()
-  ])
-  loading.value = false
-}
-
-const handleProjectClick = (message: string) => {
-  window.open(`https://${message}`, '_blank')
-}
-
-const handleShortcutClick = (url: string) => {
-  router.push(url)
-}
-
-getAllApi()
+onMounted(() => {
+  load()
+  loadNotices()
+})
 </script>
