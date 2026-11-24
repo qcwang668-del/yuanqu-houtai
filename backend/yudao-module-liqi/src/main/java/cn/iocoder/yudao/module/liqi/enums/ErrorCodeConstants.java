@@ -33,4 +33,13 @@ public interface ErrorCodeConstants {
     ErrorCode BIGMODEL_INVOKE_FAILURE = new ErrorCode(1_099_007_001, "大模型智能匹配接口调用失败：{}");
     ErrorCode BIGMODEL_COMPANY_BLANK = new ErrorCode(1_099_007_002, "企业名称不能为空");
 
+    // ========== 园区会员席位 1-099-008-000 ==========
+    ErrorCode PARK_NOT_EXISTS = new ErrorCode(1_099_008_001, "园区不存在");
+    ErrorCode PARK_SEAT_MEMBER_EXISTS = new ErrorCode(1_099_008_002, "该账号已有会员（{}，到期 {}），无需重复指派");
+    ErrorCode PARK_SEAT_NOT_ENOUGH = new ErrorCode(1_099_008_003, "当前园区没有可用的有效席位，请先增购或续费");
+    ErrorCode PARK_SEAT_PLAN_NOT_EXISTS = new ErrorCode(1_099_008_004, "会员套餐不存在或已下架");
+    ErrorCode PARK_SEAT_ACCOUNT_NOT_IN_PARK = new ErrorCode(1_099_008_005, "该账号不属于当前园区");
+    ErrorCode PARK_SEAT_ACCOUNT_NOT_EXISTS = new ErrorCode(1_099_008_006, "平台账号不存在");
+    ErrorCode PARK_SEAT_ORDER_TYPE_INVALID = new ErrorCode(1_099_008_007, "订单类型不正确");
+
 }

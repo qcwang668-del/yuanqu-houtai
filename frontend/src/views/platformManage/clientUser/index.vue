@@ -59,6 +59,7 @@
       <el-table-column label="序号" type="index" align="center" width="60" />
       <el-table-column label="用户名" align="center" prop="userName" />
       <el-table-column label="手机号" align="center" prop="phone" width="130" />
+      <el-table-column label="所属园区" align="center" prop="parkName" width="150" />
       <el-table-column label="来源" align="center" prop="source">
         <template #default="scope">
           <el-tag :type="scope.row.source === 0 ? 'success' : 'warning'">
@@ -67,6 +68,36 @@
         </template>
       </el-table-column>
       <el-table-column label="维护企业" align="center" prop="maintainEnterprise" show-overflow-tooltip />
+      <el-table-column label="会员状态" align="center" width="110">
+        <template #default="scope">
+          <el-tag
+            :type="
+              scope.row.memberStatus === 'ACTIVE'
+                ? 'success'
+                : scope.row.memberStatus === 'EXPIRED'
+                  ? 'warning'
+                  : 'info'
+            "
+            effect="light"
+          >
+            {{
+              scope.row.memberStatus === 'ACTIVE'
+                ? '生效中'
+                : scope.row.memberStatus === 'EXPIRED'
+                  ? '已过期'
+                  : '未开通'
+            }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="会员等级" align="center" prop="memberPlanName" width="110">
+        <template #default="scope">{{ scope.row.memberPlanName || '—' }}</template>
+      </el-table-column>
+      <el-table-column label="会员到期日" align="center" prop="memberExpireTime" width="130">
+        <template #default="scope">{{
+          scope.row.memberExpireTime ? formatDate(scope.row.memberExpireTime, 'YYYY-MM-DD') : '—'
+        }}</template>
+      </el-table-column>
       <el-table-column label="推广用户量" align="center" prop="promoteCount" width="100" />
       <el-table-column label="一级推广人" align="center" prop="firstPromoter" />
       <el-table-column label="二级推广人" align="center" prop="secondPromoter" />
@@ -100,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { dateFormatter } from '@/utils/formatTime'
+import { dateFormatter, formatDate } from '@/utils/formatTime'
 import { getAppUserPage, exportAppUser } from '@/api/liqi/appUser'
 import download from '@/utils/download'
 

@@ -2,10 +2,12 @@ package cn.iocoder.yudao.module.liqi.service.appuser;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.liqi.controller.admin.appuser.vo.AppUserPageReqVO;
+import cn.iocoder.yudao.module.liqi.controller.admin.appuser.vo.AppUserRespVO;
 import cn.iocoder.yudao.module.liqi.controller.admin.appuser.vo.AppUserSaveReqVO;
 import cn.iocoder.yudao.module.liqi.dal.dataobject.appuser.LiqiAppUserDO;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 力企 - APP 用户 Service
@@ -21,5 +23,8 @@ public interface LiqiAppUserService {
     LiqiAppUserDO getAppUser(Long id);
 
     PageResult<LiqiAppUserDO> getAppUserPage(AppUserPageReqVO pageReqVO);
+
+    /** 填充所属园区与会员状态 */
+    void fillMemberInfo(List<AppUserRespVO> list);
 
 }

@@ -22,6 +22,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
@@ -66,7 +67,9 @@ public class LiqiAppUserController {
     @PreAuthorize("@ss.hasPermission('liqi:app-user:query')")
     public CommonResult<AppUserRespVO> getAppUser(@RequestParam("id") Long id) {
         LiqiAppUserDO appUser = appUserService.getAppUser(id);
-        return success(BeanUtils.toBean(appUser, AppUserRespVO.class));
+        AppUserRespVO respVO = BeanUtils.toBean(appUser, AppUserRespVO.class);
+        appUserService.fillMemberInfo(Collections.singletonList(respVO));
+        return success(respVO);
     }
 
     @GetMapping("/page")
@@ -74,7 +77,9 @@ public class LiqiAppUserController {
     @PreAuthorize("@ss.hasPermission('liqi:app-user:query')")
     public CommonResult<PageResult<AppUserRespVO>> getAppUserPage(@Valid AppUserPageReqVO pageReqVO) {
         PageResult<LiqiAppUserDO> pageResult = appUserService.getAppUserPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, AppUserRespVO.class));
+        PageResult<AppUserRespVO> voPage = BeanUtils.toBean(pageResult, AppUserRespVO.class);
+        appUserService.fillMemberInfo(voPage.getList());
+        return success(voPage);
     }
 
     @GetMapping("/export-excel")

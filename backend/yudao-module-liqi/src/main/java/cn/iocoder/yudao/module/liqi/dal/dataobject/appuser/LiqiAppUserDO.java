@@ -22,6 +22,8 @@ public class LiqiAppUserDO extends TenantBaseDO {
     /** 编号 */
     @TableId
     private Long id;
+    /** 所属园区编号 */
+    private Long parkId;
     /** 用户名 */
     private String userName;
     /** 手机号 */

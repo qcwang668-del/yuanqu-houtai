@@ -14,6 +14,12 @@ public class AppUserRespVO {
     @ExcelProperty("编号")
     private Long id;
 
+    @Schema(description = "所属园区编号")
+    private Long parkId;
+
+    @Schema(description = "所属园区")
+    private String parkName;
+
     @Schema(description = "用户名")
     @ExcelProperty("用户名")
     private String userName;
@@ -49,6 +55,15 @@ public class AppUserRespVO {
     @Schema(description = "最近登录时间")
     @ExcelProperty("最近登录时间")
     private LocalDateTime lastLoginTime;
+
+    @Schema(description = "会员状态：NONE / ACTIVE / EXPIRED")
+    private String memberStatus;
+
+    @Schema(description = "会员等级")
+    private String memberPlanName;
+
+    @Schema(description = "会员到期日")
+    private LocalDateTime memberExpireTime;
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
